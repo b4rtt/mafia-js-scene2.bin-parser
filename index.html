@@ -381,6 +381,53 @@
             overflow-y: auto;
             font-family: 'Courier New', monospace;
             font-size: 12px;
+            transition: height 0.3s ease;
+        }
+
+        .log-panel.hidden {
+            height: 0;
+            padding: 0;
+            overflow: hidden;
+            border-top: none;
+        }
+
+        .log-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .log-panel-content {
+            padding: 12px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            height: calc(150px - 41px);
+        }
+
+        .log-panel.hidden .log-panel-content {
+            display: none;
+        }
+
+        .toggle-log-btn {
+            background: none;
+            border: none;
+            color: #007acc;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .toggle-log-btn:hover {
+            background: #e3f2fd;
         }
 
         .log-entry {
@@ -443,6 +490,22 @@
             font-weight: 600;
             font-size: 13px;
             color: #333;
+        }
+
+        .back-to-sections-btn {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .back-to-sections-btn:hover {
+            background: #005a9e;
         }
 
         .filter-content {
@@ -566,7 +629,13 @@
         </div>
 
         <!-- Log Panel -->
-        <div class="log-panel" id="logPanel"></div>
+        <div class="log-panel" id="logPanel">
+            <div class="log-panel-header">
+                <span>Console</span>
+                <button class="toggle-log-btn" id="toggleLogBtn" onclick="toggleLogPanel()" title="Toggle log panel">▼</button>
+            </div>
+            <div class="log-panel-content" id="logPanelContent"></div>
+        </div>
     </div>
 
     <input type="file" id="fileInput" accept=".bin">
@@ -583,6 +652,8 @@
         const editorContent = document.getElementById('editorContent');
         const propertiesContent = document.getElementById('propertiesContent');
         const logPanel = document.getElementById('logPanel');
+        const logPanelContent = document.getElementById('logPanelContent');
+        const toggleLogBtn = document.getElementById('toggleLogBtn');
         const statusText = document.getElementById('statusText');
         const statusPosition = document.getElementById('statusPosition');
         const saveBtn = document.getElementById('saveBtn');
@@ -649,8 +720,14 @@
             const logEntry = document.createElement('div');
             logEntry.className = `log-entry ${type}`;
             logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-            logPanel.appendChild(logEntry);
-            logPanel.scrollTop = logPanel.scrollHeight;
+            logPanelContent.appendChild(logEntry);
+            logPanelContent.scrollTop = logPanelContent.scrollHeight;
+        }
+
+        function toggleLogPanel() {
+            const isHidden = logPanel.classList.toggle('hidden');
+            toggleLogBtn.textContent = isHidden ? '▲' : '▼';
+            toggleLogBtn.title = isHidden ? 'Show log panel' : 'Hide log panel';
         }
 
         function updateStatus(text) {
@@ -717,10 +794,31 @@
                 selectNode('header', sceneData.header);
                 selectedSection = null;
                 activeFilters.clear();
-                document.getElementById('filterSection').style.display = 'none';
+                const filterSection = document.getElementById('filterSection');
+                if (filterSection) {
+                    filterSection.style.display = 'none';
+                }
                 displaySceneData(sceneData);
             });
             treeView.appendChild(headerNode);
+            
+            // Add "All Sections" node to go back
+            const allSectionsNode = createTreeNode('📂 All Sections', 'all-sections', null, () => {
+                selectedSection = null;
+                activeFilters.clear();
+                const filterSection = document.getElementById('filterSection');
+                if (filterSection) {
+                    filterSection.style.display = 'none';
+                }
+                displaySceneData(sceneData);
+                document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+                const allNode = document.getElementById('all-sections');
+                if (allNode) {
+                    allNode.classList.add('selected');
+                }
+                updateStatus('Viewing all sections');
+            });
+            treeView.appendChild(allSectionsNode);
             
             // Sections
             sceneData.sections.forEach((section, index) => {
@@ -734,26 +832,36 @@
                     objectsByType[type].push(dnc);
                 });
 
-                // Create filter nodes for each type
-                const filterNodes = Object.keys(objectsByType).map(type => ({
-                    text: `${type} <span class="filter-count">(${objectsByType[type].length})</span>`,
-                    id: `filter-${index}-${type}`,
-                    type: type,
-                    sectionIndex: index,
-                    count: objectsByType[type].length
-                }));
+                // Create filter nodes for each type, with objects as children
+                const filterNodes = Object.keys(objectsByType).map(type => {
+                    const objects = objectsByType[type];
+                    // Create child nodes for each object
+                    const objectNodes = objects.map((dnc, objIndex) => ({
+                        text: `${dnc.name || `Object ${dnc.ID}`} <span class="filter-count" style="color: #999; font-size: 11px;">(${dnc.dncType})</span>`,
+                        id: `dnc-${dnc.ID}-${index}`,
+                        type: null, // Not a filter node
+                        sectionIndex: index,
+                        data: dnc,
+                        isObject: true
+                    }));
+                    
+                    return {
+                        text: `${type} <span class="filter-count">(${objects.length})</span>`,
+                        id: `filter-${index}-${type}`,
+                        type: type,
+                        sectionIndex: index,
+                        count: objects.length,
+                        children: objectNodes // Add objects as children
+                    };
+                });
 
                 const sectionNode = createTreeNode(
                     `📦 ${section.sectionName} <span class="section-badge">${section.dncs.length}</span>`,
                     `section-${index}`,
                     filterNodes,
-                    () => {
-                        selectSection(section, index);
-                        selectedSection = section;
-                        activeFilters.clear();
-                        displaySceneData(sceneData);
-                    }
+                    null // No onClick - we'll handle expansion manually
                 );
+                
                 treeView.appendChild(sectionNode);
             });
         }
@@ -764,10 +872,84 @@
             displaySectionFilters(section, index);
             displaySceneData(currentSceneData);
             updateStatus(`Viewing section: ${section.sectionName}`);
+            
+            // Also select the section node
+            document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+            const sectionNode = document.getElementById(`section-${index}`);
+            if (sectionNode) {
+                sectionNode.classList.add('selected');
+            }
+        }
+
+        function displaySectionFilters(section, sectionIndex) {
+            // Group objects by type
+            const objectsByType = {};
+            section.dncs.forEach(dnc => {
+                const type = dnc.dncType || 'Unknown';
+                if (!objectsByType[type]) {
+                    objectsByType[type] = [];
+                }
+                objectsByType[type].push(dnc);
+            });
+
+            let html = '<div class="filter-header">';
+            html += '<div style="display: flex; justify-content: space-between; align-items: center;">';
+            html += '<span>Filter by Object Type</span>';
+            html += '<button class="back-to-sections-btn" onclick="backToAllSections()" title="Back to all sections">← Back</button>';
+            html += '</div>';
+            html += '</div>';
+            html += '<div class="filter-content">';
+            html += '<div style="margin-bottom: 8px;"><span class="filter-tag' + (activeFilters.size === 0 ? ' active' : '') + '" onclick="clearFilters()">All <span class="filter-count">(' + section.dncs.length + ')</span></span></div>';
+            
+            Object.keys(objectsByType).sort().forEach(type => {
+                const count = objectsByType[type].length;
+                const isActive = activeFilters.has(type);
+                html += `<div style="margin-bottom: 8px;">
+                    <span class="filter-tag${isActive ? ' active' : ''}" onclick="toggleFilter('${type}', ${sectionIndex})">
+                        ${type} <span class="filter-count">(${count})</span>
+                    </span>
+                </div>`;
+            });
+            
+            html += '</div>';
+            
+            // Show filters in sidebar below stats
+            const filterSection = document.getElementById('filterSection');
+            if (filterSection) {
+                filterSection.innerHTML = html;
+                filterSection.style.display = 'block';
+            }
+        }
+
+        function backToAllSections() {
+            selectedSection = null;
+            activeFilters.clear();
+            const filterSection = document.getElementById('filterSection');
+            if (filterSection) {
+                filterSection.style.display = 'none';
+            }
+            displaySceneData(currentSceneData);
+            
+            // Update tree view selection
+            document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+            const allNode = document.getElementById('all-sections');
+            if (allNode) {
+                allNode.classList.add('selected');
+            }
+            
+            // Collapse expanded sections
+            document.querySelectorAll('.tree-node.expanded').forEach(node => {
+                if (node.id.startsWith('section-')) {
+                    node.classList.remove('expanded');
+                }
+            });
+            
+            updateStatus('Viewing all sections');
         }
 
         function clearFilters() {
             activeFilters.clear();
+            // Don't clear selectedSection here - keep showing the section
             displaySceneData(currentSceneData);
             document.querySelectorAll('.filter-tag').forEach((tag, index) => {
                 tag.classList.toggle('active', index === 0);
@@ -780,6 +962,11 @@
             } else {
                 activeFilters.clear();
                 activeFilters.add(type);
+            }
+            
+            // Ensure section is selected when filtering
+            if (currentSceneData && currentSceneData.sections[sectionIndex]) {
+                selectedSection = currentSceneData.sections[sectionIndex];
             }
             
             // Update filter display
@@ -800,14 +987,6 @@
             displaySceneData(currentSceneData);
         }
 
-        function clearFilters() {
-            activeFilters.clear();
-            displaySceneData(currentSceneData);
-            document.querySelectorAll('.filter-tag').forEach((tag, index) => {
-                tag.classList.toggle('active', index === 0);
-            });
-        }
-
         function createTreeNode(text, id, children, onClick) {
             const node = document.createElement('div');
             node.className = 'tree-node' + (children && children.length > 0 ? ' has-children' : '');
@@ -815,14 +994,56 @@
             node.innerHTML = text;
             
             if (children && children.length > 0) {
+                // Handle clicks on the node itself (not children)
                 node.addEventListener('click', (e) => {
-                    if (e.target === node || (node.contains(e.target) && !e.target.closest('.tree-node-children'))) {
-                        const wasExpanded = node.classList.contains('expanded');
-                        node.classList.toggle('expanded');
-                        if (!wasExpanded && onClick) {
-                            // Call onClick when expanding
-                            onClick();
+                    // Ignore clicks on children or badges
+                    if (e.target.closest('.tree-node-children') || 
+                        e.target.classList.contains('section-badge') || 
+                        e.target.classList.contains('filter-count')) {
+                        return;
+                    }
+                    
+                    // Just toggle expansion, don't call onClick
+                    const wasExpanded = node.classList.contains('expanded');
+                    node.classList.toggle('expanded');
+                    
+                    // If this is a section and it's being expanded, show filters and select section
+                    if (node.id.startsWith('section-') && node.classList.contains('expanded')) {
+                        const index = parseInt(node.id.split('-')[1]);
+                        if (!isNaN(index) && currentSceneData && currentSceneData.sections[index]) {
+                            const section = currentSceneData.sections[index];
+                            displaySectionFilters(section, index);
+                            // Select the section to show its objects
+                            selectSection(section, index);
                         }
+                    } else if (node.id.startsWith('section-') && !node.classList.contains('expanded')) {
+                        // Collapsing - hide filters and go back to all sections if this was selected
+                        const index = parseInt(node.id.split('-')[1]);
+                        if (selectedSection && currentSceneData && currentSceneData.sections[index] === selectedSection) {
+                            // Clear selection and show all sections
+                            selectedSection = null;
+                            activeFilters.clear();
+                            const filterSection = document.getElementById('filterSection');
+                            if (filterSection) {
+                                filterSection.style.display = 'none';
+                            }
+                            displaySceneData(currentSceneData);
+                            node.classList.remove('selected');
+                            const allNode = document.getElementById('all-sections');
+                            if (allNode) {
+                                allNode.classList.add('selected');
+                            }
+                            updateStatus('Viewing all sections');
+                        } else {
+                            // Just hide filters for this section
+                            const filterSection = document.getElementById('filterSection');
+                            if (filterSection && selectedSection && currentSceneData && currentSceneData.sections[index] === selectedSection) {
+                                filterSection.style.display = 'none';
+                            }
+                        }
+                    } else if (onClick) {
+                        // For non-section nodes, call onClick
+                        onClick();
                     }
                 });
                 
@@ -830,32 +1051,87 @@
                 childrenContainer.className = 'tree-node-children';
                 
                 children.forEach(child => {
-                    const childNode = document.createElement('div');
-                    childNode.className = 'tree-node';
-                    childNode.id = child.id;
-                    childNode.innerHTML = child.text;
-                    childNode.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        
-                        // Handle filter clicks
-                        if (child.type) {
-                            toggleFilter(child.type, child.sectionIndex);
-                            document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
-                            childNode.classList.add('selected');
-                        } else {
-                            // Handle regular object clicks
-                            selectNode(child.id, child.data);
-                            document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
-                            childNode.classList.add('selected');
-                        }
-                    });
-                    childrenContainer.appendChild(childNode);
+                    // If child has children, create nested tree node
+                    if (child.children && child.children.length > 0) {
+                        const childTreeNode = createTreeNode(
+                            child.text,
+                            child.id,
+                            child.children,
+                            null
+                        );
+                        // Add click handler for filter type nodes
+                        childTreeNode.addEventListener('click', (e) => {
+                            // Don't handle clicks on children
+                            if (e.target.closest('.tree-node-children')) {
+                                return;
+                            }
+                            if (e.target.classList.contains('filter-count')) {
+                                return;
+                            }
+                            
+                            e.stopPropagation();
+                            
+                            // Handle filter clicks (type nodes)
+                            if (child.type) {
+                                // Select the section first if not already selected
+                                if (currentSceneData && currentSceneData.sections[child.sectionIndex]) {
+                                    const section = currentSceneData.sections[child.sectionIndex];
+                                    if (selectedSection !== section) {
+                                        selectSection(section, child.sectionIndex);
+                                    }
+                                }
+                                toggleFilter(child.type, child.sectionIndex);
+                                document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+                                childTreeNode.classList.add('selected');
+                            }
+                        });
+                        childrenContainer.appendChild(childTreeNode);
+                    } else {
+                        // Leaf node - no children
+                        const childNode = document.createElement('div');
+                        childNode.className = 'tree-node';
+                        childNode.id = child.id;
+                        childNode.innerHTML = child.text;
+                        childNode.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            
+                            // Handle filter clicks (type nodes)
+                            if (child.type) {
+                                // Select the section first if not already selected
+                                if (currentSceneData && currentSceneData.sections[child.sectionIndex]) {
+                                    const section = currentSceneData.sections[child.sectionIndex];
+                                    if (selectedSection !== section) {
+                                        selectSection(section, child.sectionIndex);
+                                    }
+                                }
+                                toggleFilter(child.type, child.sectionIndex);
+                                document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+                                childNode.classList.add('selected');
+                            } else if (child.isObject) {
+                                // Handle object clicks - show detail
+                                if (child.data) {
+                                    selectDncFromCard(child.data);
+                                    document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+                                    childNode.classList.add('selected');
+                                }
+                            } else {
+                                // Handle regular object clicks
+                                selectNode(child.id, child.data);
+                                document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+                                childNode.classList.add('selected');
+                            }
+                        });
+                        childrenContainer.appendChild(childNode);
+                    }
                 });
                 
                 node.appendChild(childrenContainer);
             } else {
+                // Leaf node - just call onClick
                 node.addEventListener('click', () => {
-                    onClick();
+                    if (onClick) {
+                        onClick();
+                    }
                     document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
                     node.classList.add('selected');
                 });
@@ -868,6 +1144,13 @@
             selectedNode = data;
             displayProperties(data);
             updateStatus(`Selected: ${nodeId}`);
+            
+            // Also select the tree node
+            document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+            const node = document.getElementById(nodeId);
+            if (node) {
+                node.classList.add('selected');
+            }
         }
 
         function displaySceneData(sceneData) {
@@ -916,6 +1199,8 @@
                 } else {
                     html += '<div style="display: grid; gap: 12px;">';
                     objectsToShow.forEach((dnc) => {
+                        // Assign section index to DNC for identification
+                        dnc.sectionIndex = index;
                         html += displayDncCard(dnc);
                     });
                     html += '</div>';
@@ -946,8 +1231,9 @@
         }
 
         function displayDncCard(dnc) {
-            const dncData = JSON.stringify(dnc).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-            let html = `<div class="object-card" onclick="selectDncObject('${dncData.replace(/'/g, "\\'")}')">`;
+            // Create a unique ID for this DNC based on section and object ID
+            const dncId = `dnc-${dnc.ID}-${dnc.sectionIndex !== undefined ? dnc.sectionIndex : 'unknown'}`;
+            let html = `<div class="object-card" onclick="selectDncById('${dncId}')" data-dnc-id="${dncId}">`;
             html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">`;
             html += `<span style="color: #007acc; font-weight: 600; font-size: 14px;">${dnc.name || `Object ${dnc.ID}`}</span>`;
             html += `<span class="object-type-badge">${dnc.dncType}</span>`;
@@ -957,10 +1243,38 @@
             return html;
         }
 
+        function selectDncById(dncId) {
+            // Find the DNC in currentSceneData
+            if (!currentSceneData) return;
+            
+            // Search through all sections
+            for (let sectionIndex = 0; sectionIndex < currentSceneData.sections.length; sectionIndex++) {
+                const section = currentSceneData.sections[sectionIndex];
+                for (let dnc of section.dncs) {
+                    const checkId = `dnc-${dnc.ID}-${sectionIndex}`;
+                    if (checkId === dncId) {
+                        selectDncFromCard(dnc);
+                        return;
+                    }
+                }
+            }
+            
+            // Also check header
+            if (currentSceneData.header && currentSceneData.header.content) {
+                const checkId = `dnc-${currentSceneData.header.content.ID}-header`;
+                if (checkId === dncId) {
+                    selectDncFromCard(currentSceneData.header.content);
+                    return;
+                }
+            }
+            
+            console.error('DNC not found:', dncId);
+        }
+
         function selectDncObject(dncDataStr) {
             try {
                 const dnc = JSON.parse(dncDataStr.replace(/&quot;/g, '"').replace(/&#39;/g, "'"));
-                selectNode('dnc', dnc);
+                selectDncFromCard(dnc);
             } catch (e) {
                 console.error('Error parsing DNC data:', e);
             }
@@ -968,7 +1282,7 @@
 
         function displayProperties(data) {
             if (!data) {
-                propertiesContent.innerHTML = '<div class="empty-state" style="height: auto;"><div style="font-size: 12px;">Select an object to view properties</div></div>';
+                propertiesContent.innerHTML = '<div class="empty-state" style="height: auto;"><div style="font-size: 13px; color: #999;">Select an object to view properties</div></div>';
                 return;
             }
 
@@ -985,7 +1299,8 @@
                 html += `<div class="property-item"><span class="property-label">Objects:</span><span class="property-value">${data.dncs?.length || 0}</span></div>`;
                 html += '</div>';
             } else if (data.content) {
-                // Header properties
+                // Header properties - need to pass the content object
+                selectedNode = data.content;
                 const props = data.content.dncProps;
                 html += '<div class="property-group">';
                 html += '<div class="property-group-title">Header Properties</div>';
@@ -993,10 +1308,10 @@
                 html += `<div class="property-item"><span class="property-label">Size:</span><span class="property-value">${ByteUtils.toInt32(data.size)} bytes</span></div>`;
                 if (props) {
                     html += `<div class="property-item"><span class="property-label">Text:</span><span class="property-value">${props.text || '(empty)'}</span></div>`;
-                    html += `<div class="property-item"><span class="property-label">View Distance:</span><span class="property-value">${props.viewDistance?.toFixed(2)}</span></div>`;
-                    html += `<div class="property-item"><span class="property-label">Camera Distance:</span><span class="property-value">${props.cameraDistance?.toFixed(2)}</span></div>`;
-                    html += `<div class="property-item"><span class="property-label">Near Clipping:</span><span class="property-value">${props.nearClipping?.toFixed(2)}</span></div>`;
-                    html += `<div class="property-item"><span class="property-label">Far Clipping:</span><span class="property-value">${props.farClipping?.toFixed(2)}</span></div>`;
+                    html += createEditableProperty('View Distance', props.viewDistance, 'viewDistance', 'Header');
+                    html += createEditableProperty('Camera Distance', props.cameraDistance, 'cameraDistance', 'Header');
+                    html += createEditableProperty('Near Clipping', props.nearClipping, 'nearClipping', 'Header');
+                    html += createEditableProperty('Far Clipping', props.farClipping, 'farClipping', 'Header');
                 }
                 html += '</div>';
             } else if (data.dncType) {
@@ -1109,24 +1424,24 @@
             if (dncType === 'Enemy') {
                 html += '<div class="property-group">';
                 html += '<div class="property-group-title">Enemy Stats</div>';
-                html += `<div class="property-item"><span class="property-label">Strength:</span><span class="property-value">${props.strength?.toFixed(2) || '0.00'}</span></div>`;
-                html += `<div class="property-item"><span class="property-label">Speed:</span><span class="property-value">${props.speed?.toFixed(2) || '0.00'}</span></div>`;
-                html += `<div class="property-item"><span class="property-label">Aggressivity:</span><span class="property-value">${props.agressivity?.toFixed(2) || '0.00'}</span></div>`;
-                html += `<div class="property-item"><span class="property-label">Intelligence:</span><span class="property-value">${props.intelligence?.toFixed(2) || '0.00'}</span></div>`;
-                html += `<div class="property-item"><span class="property-label">Sight:</span><span class="property-value">${props.sight?.toFixed(2) || '0.00'}</span></div>`;
-                html += `<div class="property-item"><span class="property-label">Shooting:</span><span class="property-value">${props.shooting?.toFixed(2) || '0.00'}</span></div>`;
-                html += `<div class="property-item"><span class="property-label">Reactions:</span><span class="property-value">${props.reactions?.toFixed(2) || '0.00'}</span></div>`;
-                html += `<div class="property-item"><span class="property-label">Driving:</span><span class="property-value">${props.driving?.toFixed(2) || '0.00'}</span></div>`;
-                html += `<div class="property-item"><span class="property-label">Mass:</span><span class="property-value">${props.mass?.toFixed(2) || '0.00'}</span></div>`;
-                html += `<div class="property-item"><span class="property-label">Hearing:</span><span class="property-value">${props.hearing?.toFixed(2) || '0.00'}</span></div>`;
+                html += createEditableProperty('Strength', props.strength, 'strength', dncType);
+                html += createEditableProperty('Speed', props.speed, 'speed', dncType);
+                html += createEditableProperty('Aggressivity', props.agressivity, 'agressivity', dncType);
+                html += createEditableProperty('Intelligence', props.intelligence, 'intelligence', dncType);
+                html += createEditableProperty('Sight', props.sight, 'sight', dncType);
+                html += createEditableProperty('Shooting', props.shooting, 'shooting', dncType);
+                html += createEditableProperty('Reactions', props.reactions, 'reactions', dncType);
+                html += createEditableProperty('Driving', props.driving, 'driving', dncType);
+                html += createEditableProperty('Mass', props.mass, 'mass', dncType);
+                html += createEditableProperty('Hearing', props.hearing, 'hearing', dncType);
                 if (props.enemyEnergy) {
                     html += '<div class="property-group">';
                     html += '<div class="property-group-title">Energy</div>';
-                    html += `<div class="property-item"><span class="property-label">Energy:</span><span class="property-value">${props.enemyEnergy.energy?.toFixed(2) || '0.00'}</span></div>`;
-                    html += `<div class="property-item"><span class="property-label">Left Hand:</span><span class="property-value">${props.enemyEnergy.leftHand?.toFixed(2) || '0.00'}</span></div>`;
-                    html += `<div class="property-item"><span class="property-label">Right Hand:</span><span class="property-value">${props.enemyEnergy.rightHand?.toFixed(2) || '0.00'}</span></div>`;
-                    html += `<div class="property-item"><span class="property-label">Left Leg:</span><span class="property-value">${props.enemyEnergy.leftLeg?.toFixed(2) || '0.00'}</span></div>`;
-                    html += `<div class="property-item"><span class="property-label">Right Leg:</span><span class="property-value">${props.enemyEnergy.rightLeg?.toFixed(2) || '0.00'}</span></div>`;
+                    html += createEditableProperty('Energy', props.enemyEnergy.energy, 'energy', dncType, 'enemyEnergy');
+                    html += createEditableProperty('Left Hand', props.enemyEnergy.leftHand, 'leftHand', dncType, 'enemyEnergy');
+                    html += createEditableProperty('Right Hand', props.enemyEnergy.rightHand, 'rightHand', dncType, 'enemyEnergy');
+                    html += createEditableProperty('Left Leg', props.enemyEnergy.leftLeg, 'leftLeg', dncType, 'enemyEnergy');
+                    html += createEditableProperty('Right Leg', props.enemyEnergy.rightLeg, 'rightLeg', dncType, 'enemyEnergy');
                     html += '</div>';
                 }
             }
@@ -1141,6 +1456,90 @@
             return html;
         }
 
+        function createEditableProperty(label, value, propName, dncType, subPath = null) {
+            const displayValue = value !== undefined && value !== null ? value.toFixed(4) : '0.0000';
+            const inputId = `prop-${propName}-${Date.now()}-${Math.random()}`;
+            return `<div class="property-item">
+                <span class="property-label">${label}:</span>
+                <span class="property-value">
+                    <input type="number" 
+                           step="0.0001" 
+                           value="${displayValue}" 
+                           id="${inputId}"
+                           data-prop="${propName}"
+                           data-dnc-type="${dncType}"
+                           data-sub-path="${subPath || ''}"
+                           onchange="updateProperty(this, '${propName}', '${dncType}', '${subPath || ''}')"
+                           style="width: 120px;">
+                </span>
+            </div>`;
+        }
+
+        function updateProperty(input, propName, dncType, subPath) {
+            if (!selectedNode || !selectedNode.dncType) return;
+            
+            const newValue = parseFloat(input.value);
+            if (isNaN(newValue)) {
+                input.value = input.defaultValue;
+                return;
+            }
+            
+            const oldValue = subPath 
+                ? selectedNode.dncProps[subPath]?.[propName]
+                : selectedNode.dncProps[propName];
+            
+            if (oldValue === newValue) return;
+            
+            // Update the property
+            if (subPath) {
+                if (!selectedNode.dncProps[subPath]) {
+                    selectedNode.dncProps[subPath] = {};
+                }
+                selectedNode.dncProps[subPath][propName] = newValue;
+            } else {
+                selectedNode.dncProps[propName] = newValue;
+            }
+            
+            // Update rawData based on DNC type
+            if (dncType === 'Standard' || dncType === 'Model' || dncType === 'Light' || dncType === 'Sound' || dncType === 'Occluder' || dncType === 'Camera' || dncType === 'Script') {
+                const updateObj = {};
+                updateObj[propName] = newValue;
+                parser.updateStandardProps(selectedNode, updateObj);
+            } else if (dncType === 'Enemy') {
+                const updateObj = {};
+                if (subPath === 'enemyEnergy') {
+                    // Update enemyEnergy sub-properties
+                    updateObj[propName] = newValue;
+                    // Also update the nested structure
+                    if (!selectedNode.dncProps.enemyEnergy) {
+                        selectedNode.dncProps.enemyEnergy = {};
+                    }
+                    selectedNode.dncProps.enemyEnergy[propName] = newValue;
+                } else {
+                    updateObj[propName] = newValue;
+                }
+                parser.updateEnemyProps(selectedNode, updateObj);
+            } else if (dncType === 'Header') {
+                const updateObj = {};
+                updateObj[propName] = newValue;
+                parser.updateHeaderProps(selectedNode, updateObj);
+            }
+            
+            // Track change
+            changeTracker.markChanged(selectedNode, subPath ? `${subPath}.${propName}` : propName, oldValue, newValue);
+            
+            // Update display
+            displayProperties(selectedNode);
+            
+            // Refresh the scene view if needed
+            if (selectedSection) {
+                displaySceneData(currentSceneData);
+            }
+            
+            updateStatus(`Updated ${propName}: ${oldValue?.toFixed(4)} → ${newValue.toFixed(4)}`);
+            addLog(`Property updated: ${selectedNode.name || `Object ${selectedNode.ID}`}.${propName} = ${newValue.toFixed(4)}`, 'info');
+        }
+
         function escapeHtml(text) {
             if (!text) return '';
             const div = document.createElement('div');
@@ -1153,13 +1552,67 @@
                 addLog('No changes to save', 'info');
                 return;
             }
-            addLog('Save functionality will be implemented in next step', 'info');
-            // TODO: Implement save functionality
+            
+            if (!currentFile) {
+                saveFileAs();
+                return;
+            }
+            
+            try {
+                updateStatus('Saving file...');
+                const buffer = parser.saveScene();
+                const blob = new Blob([buffer], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = currentFile.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                changeTracker.hasChanges = false;
+                updateSaveButtons();
+                updateStatus('File saved successfully');
+                addLog(`File saved: ${currentFile.name}`, 'info');
+            } catch (error) {
+                updateStatus('Error saving file');
+                addLog(`Error saving file: ${error.message}`, 'error');
+                console.error(error);
+            }
         }
 
         function saveFileAs() {
-            addLog('Save As functionality will be implemented in next step', 'info');
-            // TODO: Implement save as functionality
+            if (!currentSceneData) {
+                addLog('No scene data to save', 'error');
+                return;
+            }
+            
+            try {
+                updateStatus('Saving file...');
+                const buffer = parser.saveScene();
+                const blob = new Blob([buffer], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                
+                const defaultName = currentFile ? currentFile.name : 'scene2.bin';
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = defaultName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                changeTracker.hasChanges = false;
+                updateSaveButtons();
+                updateStatus('File saved successfully');
+                addLog(`File saved as: ${defaultName}`, 'info');
+            } catch (error) {
+                updateStatus('Error saving file');
+                addLog(`Error saving file: ${error.message}`, 'error');
+                console.error(error);
+            }
         }
 
         function undo() {
@@ -1172,16 +1625,37 @@
             // TODO: Implement redo
         }
 
-        // Handle tree node selection from card clicks
-        window.selectNode = function(id, data) {
+        function selectNode(nodeId, data) {
             selectedNode = data;
             displayProperties(data);
+            updateStatus(`Selected: ${nodeId}`);
+            
+            // Also select the tree node
             document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
-            const node = document.getElementById(id);
+            const node = document.getElementById(nodeId);
             if (node) {
                 node.classList.add('selected');
-                node.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
+        }
+
+        // Handle tree node selection from card clicks (for external calls)
+        window.selectDncFromCard = function(dnc) {
+            selectedNode = dnc;
+            displayProperties(dnc);
+            
+            // Find and select the corresponding tree node
+            document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+            if (dnc.sectionIndex !== undefined) {
+                const nodeId = `dnc-${dnc.ID}-${dnc.sectionIndex}`;
+                const treeNode = document.getElementById(nodeId);
+                if (treeNode) {
+                    treeNode.classList.add('selected');
+                    // Scroll into view
+                    treeNode.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }
+            
+            updateStatus(`Selected: ${dnc.name || `Object ${dnc.ID}`}`);
         };
     </script>
 </body>

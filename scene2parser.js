@@ -1149,5 +1149,180 @@ class Scene2Parser {
             script: script
         };
     }
+    
+    // Methods for writing changes back to rawData
+    writeFloat32ToRawData(rawData, offset, value) {
+        if (offset + 4 > rawData.length) return false;
+        const bytes = ByteUtils.fromFloat32(value);
+        for (let i = 0; i < 4; i++) {
+            rawData[offset + i] = bytes[i];
+        }
+        return true;
+    }
+    
+    writeInt32ToRawData(rawData, offset, value) {
+        if (offset + 4 > rawData.length) return false;
+        const bytes = ByteUtils.fromInt32(value);
+        for (let i = 0; i < 4; i++) {
+            rawData[offset + i] = bytes[i];
+        }
+        return true;
+    }
+    
+    updateStandardProps(dnc, props) {
+        if (!dnc.dncProps || !dnc.dncProps.dataBegin) {
+            // Recalculate dataBegin if needed
+            dnc.dncProps = this.createStandardProps(dnc);
+        }
+        
+        const dataBegin = dnc.dncProps.dataBegin;
+        
+        if (props.positionX !== undefined) {
+            this.writeFloat32ToRawData(dnc.rawData, dataBegin + 4, props.positionX);
+        }
+        if (props.positionY !== undefined) {
+            this.writeFloat32ToRawData(dnc.rawData, dataBegin + 8, props.positionY);
+        }
+        if (props.positionZ !== undefined) {
+            this.writeFloat32ToRawData(dnc.rawData, dataBegin + 12, props.positionZ);
+        }
+        if (props.rotationX !== undefined) {
+            this.writeFloat32ToRawData(dnc.rawData, dataBegin + 26, props.rotationX);
+        }
+        if (props.rotationY !== undefined) {
+            this.writeFloat32ToRawData(dnc.rawData, dataBegin + 30, props.rotationY);
+        }
+        if (props.rotationZ !== undefined) {
+            this.writeFloat32ToRawData(dnc.rawData, dataBegin + 34, props.rotationZ);
+        }
+        if (props.scalingX !== undefined) {
+            this.writeFloat32ToRawData(dnc.rawData, dataBegin + 44, props.scalingX);
+        }
+        if (props.scalingY !== undefined) {
+            this.writeFloat32ToRawData(dnc.rawData, dataBegin + 48, props.scalingY);
+        }
+        if (props.scalingZ !== undefined) {
+            this.writeFloat32ToRawData(dnc.rawData, dataBegin + 52, props.scalingZ);
+        }
+        
+        // Update dncProps to reflect changes
+        this.populateProps(dnc);
+    }
+    
+    updateEnemyProps(dnc, props) {
+        if (!dnc.dncProps || !dnc.dncProps.dataBegin) {
+            dnc.dncProps = this.createEnemyProps(dnc);
+        }
+        
+        const dataBegin = dnc.dncProps.dataBegin;
+        
+        const propMap = {
+            'strength': 13,
+            'energy': 17,
+            'leftHand': 21,
+            'rightHand': 25,
+            'leftLeg': 29,
+            'rightLeg': 33,
+            'behavior2': 37,
+            'speed': 41,
+            'agressivity': 45,
+            'intelligence': 49,
+            'shooting': 53,
+            'sight': 57,
+            'hearing': 61,
+            'driving': 65,
+            'mass': 69,
+            'reactions': 73
+        };
+        
+        for (const [propName, offset] of Object.entries(propMap)) {
+            if (props[propName] !== undefined) {
+                this.writeFloat32ToRawData(dnc.rawData, dataBegin + offset, props[propName]);
+            }
+        }
+        
+        if (props.behavior1 !== undefined) {
+            dnc.rawData[dataBegin + 5] = props.behavior1;
+        }
+        if (props.voice !== undefined) {
+            dnc.rawData[dataBegin + 9] = props.voice;
+        }
+        
+        // Update dncProps to reflect changes
+        this.populateProps(dnc);
+    }
+    
+    updateHeaderProps(dnc, props) {
+        if (!dnc.dncProps || dnc.dncProps.dataBegin === undefined) {
+            dnc.dncProps = this.createHeaderProps(dnc);
+        }
+        
+        const dataBegin = dnc.dncProps.dataBegin;
+        const textLength = dnc.dncProps.text ? dnc.dncProps.text.length : 0;
+        
+        if (props.viewDistance !== undefined) {
+            this.writeFloat32ToRawData(dnc.rawData, dataBegin + textLength + 60, props.viewDistance);
+        }
+        if (props.cameraDistance !== undefined) {
+            this.writeFloat32ToRawData(dnc.rawData, dataBegin + textLength + 50, props.cameraDistance);
+        }
+        if (props.nearClipping !== undefined) {
+            this.writeFloat32ToRawData(dnc.rawData, dataBegin + textLength + 70, props.nearClipping);
+        }
+        if (props.farClipping !== undefined) {
+            this.writeFloat32ToRawData(dnc.rawData, dataBegin + textLength + 74, props.farClipping);
+        }
+        
+        // Update dncProps to reflect changes
+        this.populateProps(dnc);
+    }
+    
+    // Rebuild the entire binary file from scene2Data
+    saveScene() {
+        const sections = [];
+        
+        // Write header
+        if (this.scene2Data.header.content) {
+            const headerMagic = this.scene2Data.header.magic;
+            const headerSize = this.scene2Data.header.size;
+            const headerContent = this.scene2Data.header.content;
+            
+            sections.push(...headerMagic);
+            sections.push(...headerSize);
+            sections.push(...headerContent.rawData);
+        }
+        
+        // Write sections
+        this.scene2Data.sections.forEach(section => {
+            // Write section ID
+            sections.push(...section.sectionIdArr);
+            
+            // Write section length (will be updated later)
+            const sectionLengthPos = sections.length;
+            sections.push(0, 0, 0, 0);
+            
+            // Write all DNCs in this section
+            section.dncs.forEach(dnc => {
+                // Write DNC ID
+                sections.push(...dnc.objectIDArr);
+                
+                // Write DNC length
+                const dncLength = dnc.rawData.length + dnc.objectIDArr.length;
+                sections.push(...ByteUtils.fromInt32(dncLength));
+                
+                // Write DNC data
+                sections.push(...dnc.rawData);
+            });
+            
+            // Update section length
+            const sectionLength = sections.length - sectionLengthPos;
+            const lengthBytes = ByteUtils.fromInt32(sectionLength);
+            for (let i = 0; i < 4; i++) {
+                sections[sectionLengthPos + i] = lengthBytes[i];
+            }
+        });
+        
+        return new Uint8Array(sections).buffer;
+    }
 }
 
