@@ -1340,15 +1340,15 @@
             if (dncType === 'Standard' || dncType === 'Model' || dncType === 'Light' || dncType === 'Sound' || dncType === 'Occluder' || dncType === 'Camera' || dncType === 'Script') {
                 html += '<div class="property-group">';
                 html += '<div class="property-group-title">Transform</div>';
-                html += `<div class="property-item"><span class="property-label">Position X:</span><span class="property-value">${props.positionX?.toFixed(4) || '0.0000'}</span></div>`;
-                html += `<div class="property-item"><span class="property-label">Position Y:</span><span class="property-value">${props.positionY?.toFixed(4) || '0.0000'}</span></div>`;
-                html += `<div class="property-item"><span class="property-label">Position Z:</span><span class="property-value">${props.positionZ?.toFixed(4) || '0.0000'}</span></div>`;
-                html += `<div class="property-item"><span class="property-label">Rotation X:</span><span class="property-value">${props.rotationX?.toFixed(4) || '0.0000'}</span></div>`;
-                html += `<div class="property-item"><span class="property-label">Rotation Y:</span><span class="property-value">${props.rotationY?.toFixed(4) || '0.0000'}</span></div>`;
-                html += `<div class="property-item"><span class="property-label">Rotation Z:</span><span class="property-value">${props.rotationZ?.toFixed(4) || '0.0000'}</span></div>`;
-                html += `<div class="property-item"><span class="property-label">Scale X:</span><span class="property-value">${props.scalingX?.toFixed(4) || '0.0000'}</span></div>`;
-                html += `<div class="property-item"><span class="property-label">Scale Y:</span><span class="property-value">${props.scalingY?.toFixed(4) || '0.0000'}</span></div>`;
-                html += `<div class="property-item"><span class="property-label">Scale Z:</span><span class="property-value">${props.scalingZ?.toFixed(4) || '0.0000'}</span></div>`;
+                html += createEditableProperty('Position X', props.positionX, 'positionX', dncType);
+                html += createEditableProperty('Position Y', props.positionY, 'positionY', dncType);
+                html += createEditableProperty('Position Z', props.positionZ, 'positionZ', dncType);
+                html += createEditableProperty('Rotation X', props.rotationX, 'rotationX', dncType);
+                html += createEditableProperty('Rotation Y', props.rotationY, 'rotationY', dncType);
+                html += createEditableProperty('Rotation Z', props.rotationZ, 'rotationZ', dncType);
+                html += createEditableProperty('Scale X', props.scalingX, 'scalingX', dncType);
+                html += createEditableProperty('Scale Y', props.scalingY, 'scalingY', dncType);
+                html += createEditableProperty('Scale Z', props.scalingZ, 'scalingZ', dncType);
                 html += '</div>';
             }
 
@@ -1367,14 +1367,18 @@
                 html += '<div class="property-group-title">Light Properties</div>';
                 html += `<div class="property-item"><span class="property-label">Type:</span><span class="property-value">${props.lightType || '(none)'}</span></div>`;
                 if (props.color) {
-                    html += `<div class="property-item"><span class="property-label">Color:</span><span class="property-value">RGB(${props.color.r?.toFixed(3)}, ${props.color.g?.toFixed(3)}, ${props.color.b?.toFixed(3)})</span></div>`;
+                    html += createEditableProperty('Color R', props.color.r, 'colorR', dncType);
+                    html += createEditableProperty('Color G', props.color.g, 'colorG', dncType);
+                    html += createEditableProperty('Color B', props.color.b, 'colorB', dncType);
                 }
-                html += `<div class="property-item"><span class="property-label">Power:</span><span class="property-value">${props.power?.toFixed(2) || '0.00'}</span></div>`;
+                html += createEditableProperty('Power', props.power, 'power', dncType);
                 if (props.cone) {
-                    html += `<div class="property-item"><span class="property-label">Cone:</span><span class="property-value">Inner: ${props.cone.innerAngle?.toFixed(2)}°, Outer: ${props.cone.outerAngle?.toFixed(2)}°</span></div>`;
+                    html += createEditableProperty('Cone Inner Angle', props.cone.innerAngle, 'coneInnerAngle', dncType);
+                    html += createEditableProperty('Cone Outer Angle', props.cone.outerAngle, 'coneOuterAngle', dncType);
                 }
                 if (props.radius) {
-                    html += `<div class="property-item"><span class="property-label">Radius:</span><span class="property-value">Inner: ${props.radius.innerRadius?.toFixed(2)}, Outer: ${props.radius.outerRadius?.toFixed(2)}</span></div>`;
+                    html += createEditableProperty('Radius Inner', props.radius.innerRadius, 'radiusInner', dncType);
+                    html += createEditableProperty('Radius Outer', props.radius.outerRadius, 'radiusOuter', dncType);
                 }
                 html += `<div class="property-item"><span class="property-label">Flags:</span><span class="property-value">${props.flags || '0x0'}</span></div>`;
                 if (props.sector) {
@@ -1387,12 +1391,14 @@
                 html += '<div class="property-group">';
                 html += '<div class="property-group-title">Sound Properties</div>';
                 html += `<div class="property-item"><span class="property-label">Type:</span><span class="property-value">${props.soundType || '(none)'}</span></div>`;
-                html += `<div class="property-item"><span class="property-label">Volume:</span><span class="property-value">${props.volume?.toFixed(2) || '0.00'}</span></div>`;
+                html += createEditableProperty('Volume', props.volume, 'volume', dncType);
+                html += createEditableProperty('Pitch', props.pitch, 'pitch', dncType);
                 if (props.radius) {
-                    html += `<div class="property-item"><span class="property-label">Radius:</span><span class="property-value">Inner: ${props.radius.innerRadius?.toFixed(2)}, Outer: ${props.radius.outerRadius?.toFixed(2)}</span></div>`;
-                    html += `<div class="property-item"><span class="property-label">Falloff:</span><span class="property-value">Inner: ${props.radius.innerFalloff?.toFixed(2)}, Outer: ${props.radius.outerFalloff?.toFixed(2)}</span></div>`;
+                    html += createEditableProperty('Radius Inner', props.radius.innerRadius, 'radiusInner', dncType);
+                    html += createEditableProperty('Radius Outer', props.radius.outerRadius, 'radiusOuter', dncType);
+                    html += createEditableProperty('Falloff Inner', props.radius.innerFalloff, 'radiusInnerFalloff', dncType);
+                    html += createEditableProperty('Falloff Outer', props.radius.outerFalloff, 'radiusOuterFalloff', dncType);
                 }
-                html += `<div class="property-item"><span class="property-label">Pitch:</span><span class="property-value">${props.pitch?.toFixed(2) || '0.00'}</span></div>`;
                 html += `<div class="property-item"><span class="property-label">Loop:</span><span class="property-value">${props.loop ? 'Yes' : 'No'}</span></div>`;
                 if (props.sector) {
                     html += `<div class="property-item"><span class="property-label">Sector:</span><span class="property-value">${props.sector}</span></div>`;
@@ -1417,7 +1423,7 @@
             if (dncType === 'Camera') {
                 html += '<div class="property-group">';
                 html += '<div class="property-group-title">Camera Properties</div>';
-                html += `<div class="property-item"><span class="property-label">FOV:</span><span class="property-value">${props.fov?.toFixed(2) || '0.00'}°</span></div>`;
+                html += createEditableProperty('FOV', props.fov, 'fov', dncType);
                 html += '</div>';
             }
 
@@ -1501,10 +1507,25 @@
             }
             
             // Update rawData based on DNC type
-            if (dncType === 'Standard' || dncType === 'Model' || dncType === 'Light' || dncType === 'Sound' || dncType === 'Occluder' || dncType === 'Camera' || dncType === 'Script') {
+            const transformProps = ['positionX', 'positionY', 'positionZ', 'rotationX', 'rotationY', 'rotationZ', 'scalingX', 'scalingY', 'scalingZ'];
+            const isTransformProp = transformProps.includes(propName);
+            
+            if (dncType === 'Standard' || dncType === 'Model' || dncType === 'Script' || dncType === 'Occluder') {
                 const updateObj = {};
                 updateObj[propName] = newValue;
                 parser.updateStandardProps(selectedNode, updateObj);
+            } else if (dncType === 'Light') {
+                const updateObj = {};
+                updateObj[propName] = newValue;
+                parser.updateLightProps(selectedNode, updateObj);
+            } else if (dncType === 'Sound') {
+                const updateObj = {};
+                updateObj[propName] = newValue;
+                parser.updateSoundProps(selectedNode, updateObj);
+            } else if (dncType === 'Camera') {
+                const updateObj = {};
+                updateObj[propName] = newValue;
+                parser.updateCameraProps(selectedNode, updateObj);
             } else if (dncType === 'Enemy') {
                 const updateObj = {};
                 if (subPath === 'enemyEnergy') {
