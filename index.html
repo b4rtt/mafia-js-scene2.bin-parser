@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scene2 Parser</title>
+    <title>Mafia Scene2 Editor</title>
     <style>
         * {
             margin: 0;
@@ -13,541 +13,1131 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f5f5f5;
+            color: #333;
             min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             overflow: hidden;
         }
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #ffffff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
 
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+        .menu-bar {
+            background: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 13px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
-        .header p {
-            opacity: 0.9;
-            font-size: 1.1em;
-        }
-
-        .file-input-container {
-            padding: 40px;
-            text-align: center;
-            border-bottom: 2px solid #f0f0f0;
-        }
-
-        .file-input-wrapper {
-            position: relative;
-            display: inline-block;
-        }
-
-        input[type="file"] {
-            display: none;
-        }
-
-        .file-label {
-            display: inline-block;
-            padding: 15px 40px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 8px;
+        .menu-item {
+            padding: 4px 12px;
             cursor: pointer;
-            font-size: 1.1em;
-            font-weight: 600;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .file-label:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-
-        .file-label:active {
-            transform: translateY(0);
-        }
-
-        .file-name {
-            margin-top: 15px;
-            color: #666;
-            font-size: 0.95em;
-        }
-
-        .content {
-            padding: 30px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-            font-size: 1.1em;
-        }
-
-        .error {
-            background: #fee;
-            color: #c33;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border-left: 4px solid #c33;
-        }
-
-        .section {
-            margin-bottom: 30px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .section-header {
-            background: #f8f9fa;
-            padding: 15px 20px;
-            font-weight: 600;
-            font-size: 1.2em;
-            color: #333;
-            border-bottom: 2px solid #e0e0e0;
-            cursor: pointer;
+            border: 1px solid transparent;
             user-select: none;
-            transition: background 0.2s;
         }
 
-        .section-header:hover {
+        .menu-item:hover {
             background: #f0f0f0;
+            border-radius: 4px;
         }
 
-        .section-content {
-            padding: 20px;
-            display: none;
+        .menu-item.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
         }
 
-        .section-content.expanded {
-            display: block;
+        .separator {
+            width: 1px;
+            height: 20px;
+            background: #e0e0e0;
+            margin: 0 8px;
         }
 
-        .section-info {
-            margin-bottom: 15px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            font-size: 0.9em;
-            color: #666;
+        .toolbar {
+            background: #fafafa;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .dnc-item {
-            margin-bottom: 20px;
-            padding: 15px;
-            background: #fff;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            border-left: 4px solid #667eea;
-        }
-
-        .dnc-header {
-            font-weight: 600;
-            font-size: 1.1em;
+        .toolbar-button {
+            padding: 6px 16px;
+            background: #ffffff;
+            border: 1px solid #d0d0d0;
             color: #333;
-            margin-bottom: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 13px;
+            user-select: none;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .toolbar-button:hover {
+            background: #f0f0f0;
+            border-color: #007acc;
+        }
+
+        .toolbar-button:active {
+            background: #e0e0e0;
+        }
+
+        .toolbar-button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status-bar {
+            background: #007acc;
+            color: white;
+            padding: 6px 16px;
+            font-size: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-top: 1px solid #005a9e;
         }
 
-        .dnc-type {
-            background: #667eea;
-            color: white;
-            padding: 4px 12px;
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: #ffffff;
+            border-right: 1px solid #e0e0e0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            font-weight: 600;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .tree-view {
+            flex: 1;
+            padding: 8px;
+            overflow-y: auto;
+        }
+
+        .tree-node {
+            padding: 8px 12px;
+            cursor: pointer;
+            user-select: none;
+            font-size: 13px;
+            border-left: 3px solid transparent;
             border-radius: 4px;
-            font-size: 0.85em;
-            font-weight: normal;
+            margin: 2px 0;
+            transition: all 0.2s;
         }
 
-        .dnc-details {
-            margin-top: 10px;
+        .tree-node:hover {
+            background: #f0f0f0;
         }
 
-        .prop-row {
-            display: grid;
-            grid-template-columns: 200px 1fr;
-            gap: 10px;
+        .tree-node.selected {
+            background: #e3f2fd;
+            border-left-color: #007acc;
+            color: #007acc;
+            font-weight: 500;
+        }
+
+        .filter-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #e3f2fd;
+            color: #007acc;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            margin: 2px 4px 2px 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-tag:hover {
+            background: #bbdefb;
+        }
+
+        .filter-tag.active {
+            background: #007acc;
+            color: white;
+        }
+
+        .filter-count {
+            opacity: 0.7;
+            font-size: 11px;
+            margin-left: 4px;
+        }
+
+        .tree-node.has-children::before {
+            content: '▶';
+            display: inline-block;
+            width: 12px;
+            margin-right: 4px;
+            font-size: 8px;
+            transition: transform 0.2s;
+        }
+
+        .tree-node.expanded::before {
+            transform: rotate(90deg);
+        }
+
+        .tree-node-children {
+            margin-left: 16px;
+            display: none;
+        }
+
+        .tree-node.expanded + .tree-node-children {
+            display: block;
+        }
+
+        .editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #fafafa;
+        }
+
+        .properties-panel {
+            background: #ffffff;
+            border-left: 1px solid #e0e0e0;
+            width: 350px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .properties-header {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .properties-content {
+            padding: 16px;
+            flex: 1;
+        }
+
+        .property-group {
+            margin-bottom: 24px;
+        }
+
+        .property-group-title {
+            font-weight: 600;
+            color: #007acc;
+            margin-bottom: 12px;
+            font-size: 13px;
+            text-transform: uppercase;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e0e0;
+            letter-spacing: 0.5px;
+        }
+
+        .property-item {
+            display: flex;
+            justify-content: space-between;
             padding: 8px 0;
+            font-size: 13px;
             border-bottom: 1px solid #f0f0f0;
         }
 
-        .prop-row:last-child {
-            border-bottom: none;
+        .property-label {
+            color: #666;
+            flex: 1;
+            font-weight: 500;
         }
 
-        .prop-label {
-            font-weight: 600;
-            color: #555;
-        }
-
-        .prop-value {
+        .property-value {
             color: #333;
+            flex: 1;
+            text-align: right;
             word-break: break-word;
         }
 
-        .header-info {
-            background: #e8f4fd;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+        .property-value input {
+            background: #ffffff;
+            border: 1px solid #d0d0d0;
+            color: #333;
+            padding: 4px 8px;
+            font-family: inherit;
+            font-size: 12px;
+            width: 100%;
+            text-align: right;
+            border-radius: 4px;
         }
 
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 2em;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            opacity: 0.9;
-            font-size: 0.9em;
+        .property-value input:focus {
+            outline: 2px solid #007acc;
+            border-color: #007acc;
         }
 
         .empty-state {
-            text-align: center;
-            padding: 60px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
             color: #999;
+            text-align: center;
+            padding: 40px;
         }
 
         .empty-state-icon {
-            font-size: 4em;
+            font-size: 64px;
             margin-bottom: 20px;
+            opacity: 0.5;
         }
 
-        .logs {
+        .file-info {
             background: #f8f9fa;
-            padding: 15px;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 12px;
+        }
+
+        .file-info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+        }
+
+        .script-view {
+            background: #f8f9fa;
+            padding: 12px;
             border-radius: 6px;
-            margin-bottom: 20px;
+            margin-top: 8px;
             font-family: 'Courier New', monospace;
-            font-size: 0.9em;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #333;
+            border: 1px solid #e0e0e0;
+        }
+
+        .hex-view {
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            background: #1e1e1e;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #3c3c3c;
             max-height: 200px;
             overflow-y: auto;
+        }
+
+        .section-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #007acc;
+            color: white;
+            font-size: 11px;
+            border-radius: 12px;
+            margin-left: 8px;
+            font-weight: 500;
+        }
+
+        .object-type-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            background: #e3f2fd;
+            color: #007acc;
+            font-size: 11px;
+            border-radius: 12px;
+            margin-left: 8px;
+            font-weight: 500;
+        }
+
+        .log-panel {
+            background: #ffffff;
+            border-top: 1px solid #e0e0e0;
+            height: 150px;
+            padding: 12px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
         }
 
         .log-entry {
             padding: 4px 0;
             color: #666;
         }
+
+        .log-entry.info {
+            color: #007acc;
+        }
+
+        .log-entry.error {
+            color: #d32f2f;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 24px;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 12px;
+        }
+
+        .stat-item {
+            display: flex;
+            gap: 8px;
+        }
+
+        .stat-label {
+            color: #666;
+        }
+
+        .stat-value {
+            color: #007acc;
+            font-weight: 600;
+        }
+
+        .object-card {
+            background: #ffffff;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .object-card:hover {
+            border-color: #007acc;
+            box-shadow: 0 2px 8px rgba(0,122,204,0.15);
+            transform: translateY(-1px);
+        }
+
+        .filter-header {
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 600;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .filter-content {
+            padding: 12px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f0f0f0;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c0c0c0;
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a0a0a0;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🎮 Scene2 Parser</h1>
-            <p>Načtěte soubor scene2.bin a zobrazte všechny informace</p>
+    <div class="editor-container">
+        <!-- Menu Bar -->
+        <div class="menu-bar">
+            <div class="menu-item" onclick="document.getElementById('fileInput').click()">File</div>
+            <div class="menu-item disabled">Edit</div>
+            <div class="menu-item disabled">View</div>
+            <div class="menu-item disabled">Tools</div>
+            <div class="menu-item disabled">Help</div>
+            <div class="separator"></div>
+            <div class="menu-item" id="saveButton" style="display: none;" onclick="saveFile()">Save</div>
+            <div class="menu-item" id="saveAsButton" style="display: none;" onclick="saveFileAs()">Save As...</div>
         </div>
 
-        <div class="file-input-container">
-            <div class="file-input-wrapper">
-                <input type="file" id="fileInput" accept=".bin">
-                <label for="fileInput" class="file-label">
-                    📁 Vybrat soubor scene2.bin
-                </label>
-            </div>
-            <div class="file-name" id="fileName"></div>
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button class="toolbar-button" onclick="document.getElementById('fileInput').click()">📁 Open File</button>
+            <button class="toolbar-button disabled" id="saveBtn" onclick="saveFile()">💾 Save</button>
+            <button class="toolbar-button disabled" id="saveAsBtn" onclick="saveFileAs()">💾 Save As...</button>
+            <div class="separator"></div>
+            <button class="toolbar-button disabled" id="undoBtn" onclick="undo()">↶ Undo</button>
+            <button class="toolbar-button disabled" id="redoBtn" onclick="redo()">↷ Redo</button>
         </div>
 
-        <div class="content" id="content">
-            <div class="empty-state">
-                <div class="empty-state-icon">📂</div>
-                <h2>Vyberte soubor pro začátek</h2>
-                <p>Zvolte soubor scene2.bin z vašeho počítače</p>
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Sidebar (Tree View) -->
+            <div class="sidebar">
+                <div class="sidebar-header">Scene Structure</div>
+                <div class="file-info" id="fileInfo" style="display: none;">
+                    <div class="file-info-item">
+                        <span>File:</span>
+                        <span id="fileName" style="color: #007acc; font-weight: 500;"></span>
+                    </div>
+                    <div class="file-info-item">
+                        <span>Size:</span>
+                        <span id="fileSize" style="color: #007acc; font-weight: 500;"></span>
+                    </div>
+                </div>
+                <div class="stats-bar" id="statsBar" style="display: none;">
+                    <div class="stat-item">
+                        <span class="stat-label">Sections:</span>
+                        <span class="stat-value" id="statSections">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Objects:</span>
+                        <span class="stat-value" id="statObjects">0</span>
+                    </div>
+                </div>
+                <div id="filterSection" style="display: none;"></div>
+                <div class="tree-view" id="treeView">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📂</div>
+                        <div style="color: #333;">No file loaded</div>
+                        <div style="margin-top: 8px; font-size: 12px; color: #999;">Open a scene2.bin file to begin</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Editor Panel -->
+            <div class="editor-panel">
+                <div id="editorContent" style="flex: 1; overflow-y: auto; padding: 24px; background: #fafafa;">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎮</div>
+                        <div style="font-size: 18px; margin-bottom: 8px; color: #333; font-weight: 500;">Mafia Scene2 Editor</div>
+                        <div style="color: #999;">Load a scene2.bin file to view and edit scene data</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Properties Panel -->
+            <div class="properties-panel">
+                <div class="properties-header">Properties</div>
+                <div class="properties-content" id="propertiesContent">
+                    <div class="empty-state" style="height: auto;">
+                        <div style="font-size: 32px; margin-bottom: 12px; opacity: 0.5;">⚙️</div>
+                        <div style="font-size: 13px; color: #999;">Select an object to view properties</div>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div>
+                <span id="statusText">Ready</span>
+            </div>
+            <div>
+                <span id="statusPosition">Position: --</span>
+            </div>
+        </div>
+
+        <!-- Log Panel -->
+        <div class="log-panel" id="logPanel"></div>
     </div>
 
+    <input type="file" id="fileInput" accept=".bin">
     <script src="scene2parser.js"></script>
     <script>
         const fileInput = document.getElementById('fileInput');
         const fileName = document.getElementById('fileName');
-        const content = document.getElementById('content');
+        const fileSize = document.getElementById('fileSize');
+        const fileInfo = document.getElementById('fileInfo');
+        const statsBar = document.getElementById('statsBar');
+        const statSections = document.getElementById('statSections');
+        const statObjects = document.getElementById('statObjects');
+        const treeView = document.getElementById('treeView');
+        const editorContent = document.getElementById('editorContent');
+        const propertiesContent = document.getElementById('propertiesContent');
+        const logPanel = document.getElementById('logPanel');
+        const statusText = document.getElementById('statusText');
+        const statusPosition = document.getElementById('statusPosition');
+        const saveBtn = document.getElementById('saveBtn');
+        const saveAsBtn = document.getElementById('saveAsBtn');
+        const saveButton = document.getElementById('saveButton');
+        const saveAsButton = document.getElementById('saveAsButton');
+
         const parser = new Scene2Parser();
+        let currentSceneData = null;
+        let currentFile = null;
+        let selectedNode = null;
+        let selectedSection = null;
+        let activeFilters = new Set();
+        
+        // Prepare for future editing: track changes
+        const changeTracker = {
+            changes: [],
+            hasChanges: false,
+            originalData: null,
+            
+            markChanged: function(node, property, oldValue, newValue) {
+                this.hasChanges = true;
+                this.changes.push({
+                    node: node,
+                    property: property,
+                    oldValue: oldValue,
+                    newValue: newValue,
+                    timestamp: Date.now()
+                });
+                updateSaveButtons();
+            },
+            
+            clear: function() {
+                this.changes = [];
+                this.hasChanges = false;
+                this.originalData = null;
+                updateSaveButtons();
+            },
+            
+            reset: function() {
+                this.clear();
+                if (currentSceneData) {
+                    this.originalData = JSON.parse(JSON.stringify(currentSceneData));
+                }
+            }
+        };
+
+        function updateSaveButtons() {
+            const enabled = changeTracker.hasChanges && currentFile;
+            saveBtn.disabled = !enabled;
+            saveAsBtn.disabled = !currentSceneData;
+            saveButton.style.display = enabled ? 'block' : 'none';
+            saveAsButton.style.display = currentSceneData ? 'block' : 'none';
+            if (enabled) {
+                saveBtn.classList.remove('disabled');
+                saveAsBtn.classList.remove('disabled');
+            } else {
+                saveBtn.classList.add('disabled');
+                saveAsBtn.classList.add('disabled');
+            }
+        }
+
+        function addLog(message, type = 'info') {
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logPanel.appendChild(logEntry);
+            logPanel.scrollTop = logPanel.scrollHeight;
+        }
+
+        function updateStatus(text) {
+            statusText.textContent = text;
+        }
 
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
-            fileName.textContent = `Vybraný soubor: ${file.name}`;
-            content.innerHTML = '<div class="loading">⏳ Načítám soubor...</div>';
+            currentFile = file;
+            fileName.textContent = file.name;
+            fileSize.textContent = formatBytes(file.size);
+            fileInfo.style.display = 'block';
+            statsBar.style.display = 'flex';
+            
+            updateStatus('Loading file...');
+            addLog(`Opening file: ${file.name}`, 'info');
+            editorContent.innerHTML = '<div class="empty-state"><div>Loading...</div></div>';
 
             try {
                 const arrayBuffer = await file.arrayBuffer();
-                const sceneData = parser.loadScene(arrayBuffer);
-
-                displaySceneData(sceneData, parser.logs);
+                currentSceneData = parser.loadScene(arrayBuffer);
+                
+                changeTracker.reset();
+                
+                const totalDncs = currentSceneData.sections.reduce((sum, section) => sum + section.dncs.length, 0);
+                statSections.textContent = currentSceneData.sections.length;
+                statObjects.textContent = totalDncs;
+                
+                buildTreeView(currentSceneData);
+                displaySceneData(currentSceneData);
+                selectedSection = null;
+                activeFilters.clear();
+                
+                updateStatus('File loaded successfully');
+                addLog(`File loaded: ${currentSceneData.sections.length} sections, ${totalDncs} objects`, 'info');
+                updateSaveButtons();
             } catch (error) {
-                content.innerHTML = `
-                    <div class="error">
-                        <strong>Chyba při parsování:</strong><br>
-                        ${error.message}
+                updateStatus('Error loading file');
+                addLog(`Error: ${error.message}`, 'error');
+                editorContent.innerHTML = `
+                    <div class="empty-state">
+                        <div style="color: #f48771; font-size: 16px; margin-bottom: 8px;">Error</div>
+                        <div style="color: #555;">${error.message}</div>
                     </div>
                 `;
-                console.error(error);
             }
         });
 
-        function displaySceneData(sceneData, logs) {
-            let html = '';
-
-            // Statistics
-            const totalDncs = sceneData.sections.reduce((sum, section) => sum + section.dncs.length, 0);
-            html += `
-                <div class="stats">
-                    <div class="stat-card">
-                        <div class="stat-value">${sceneData.sections.length}</div>
-                        <div class="stat-label">Sekcí</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${totalDncs}</div>
-                        <div class="stat-label">Objektů</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${parser.logs.length}</div>
-                        <div class="stat-label">Operací</div>
-                    </div>
-                </div>
-            `;
-
-            // Logs
-            if (logs.length > 0) {
-                html += '<div class="logs">';
-                logs.forEach(log => {
-                    html += `<div class="log-entry">${log}</div>`;
-                });
-                html += '</div>';
-            }
-
-            // Header
-            if (sceneData.header.content) {
-                html += '<div class="section">';
-                html += '<div class="section-header" onclick="toggleSection(this)">📋 Header</div>';
-                html += '<div class="section-content">';
-                
-                const headerProps = sceneData.header.content.dncProps;
-                html += '<div class="header-info">';
-                html += `<div class="prop-row"><span class="prop-label">Magic:</span><span class="prop-value">${sceneData.header.magic.map(b => '0x' + b.toString(16).padStart(2, '0').toUpperCase()).join(' ')}</span></div>`;
-                html += `<div class="prop-row"><span class="prop-label">Size:</span><span class="prop-value">${ByteUtils.toInt32(sceneData.header.size)} bytes</span></div>`;
-                if (headerProps) {
-                    html += `<div class="prop-row"><span class="prop-label">Text:</span><span class="prop-value">${headerProps.text || '(prázdné)'}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">View Distance:</span><span class="prop-value">${headerProps.viewDistance?.toFixed(2)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Camera Distance:</span><span class="prop-value">${headerProps.cameraDistance?.toFixed(2)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Near Clipping:</span><span class="prop-value">${headerProps.nearClipping?.toFixed(2)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Far Clipping:</span><span class="prop-value">${headerProps.farClipping?.toFixed(2)}</span></div>`;
-                }
-                html += '</div>';
-                html += '</div></div>';
-            }
-
-            // Sections
-            sceneData.sections.forEach((section, sectionIndex) => {
-                html += '<div class="section">';
-                html += `<div class="section-header" onclick="toggleSection(this)">📦 ${section.sectionName} (${section.dncs.length} objektů)</div>`;
-                html += '<div class="section-content">';
-                
-                html += `<div class="section-info">`;
-                html += `Typ: ${section.sectionType} | `;
-                html += `Délka: ${section.sectionLength} bytes | `;
-                html += `Začátek: 0x${section.sectionStart.toString(16).toUpperCase()} | `;
-                html += `ID: ${section.sectionIdArr.map(b => '0x' + b.toString(16).padStart(2, '0').toUpperCase()).join(' ')}`;
-                html += `</div>`;
-
-                if (section.dncs.length === 0) {
-                    html += '<div style="padding: 20px; color: #999; text-align: center;">Tato sekce neobsahuje žádné objekty</div>';
-                } else {
-                    section.dncs.forEach((dnc, dncIndex) => {
-                        html += displayDnc(dnc);
-                    });
-                }
-
-                html += '</div></div>';
-            });
-
-            content.innerHTML = html;
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
         }
 
-        function displayDnc(dnc) {
-            let html = '<div class="dnc-item">';
-            html += `<div class="dnc-header">`;
-            html += `<span>${dnc.name || `Objekt ${dnc.ID}`}</span>`;
-            html += `<span class="dnc-type">${dnc.dncType}</span>`;
-            html += `</div>`;
+        function buildTreeView(sceneData) {
+            treeView.innerHTML = '';
+            
+            // Header
+            const headerNode = createTreeNode('📋 Header', 'header', null, () => {
+                selectNode('header', sceneData.header);
+                selectedSection = null;
+                activeFilters.clear();
+                document.getElementById('filterSection').style.display = 'none';
+                displaySceneData(sceneData);
+            });
+            treeView.appendChild(headerNode);
+            
+            // Sections
+            sceneData.sections.forEach((section, index) => {
+                // Group objects by type
+                const objectsByType = {};
+                section.dncs.forEach(dnc => {
+                    const type = dnc.dncType || 'Unknown';
+                    if (!objectsByType[type]) {
+                        objectsByType[type] = [];
+                    }
+                    objectsByType[type].push(dnc);
+                });
 
-            html += '<div class="dnc-details">';
-            html += `<div class="prop-row"><span class="prop-label">ID:</span><span class="prop-value">${dnc.ID}</span></div>`;
-            html += `<div class="prop-row"><span class="prop-label">Object ID:</span><span class="prop-value">${dnc.objectIDArr.map(b => '0x' + b.toString(16).padStart(2, '0').toUpperCase()).join(' ')}</span></div>`;
-            html += `<div class="prop-row"><span class="prop-label">Typ:</span><span class="prop-value">${dnc.dncKind}</span></div>`;
-            html += `<div class="prop-row"><span class="prop-label">Velikost dat:</span><span class="prop-value">${dnc.rawData.length} bytes</span></div>`;
+                // Create filter nodes for each type
+                const filterNodes = Object.keys(objectsByType).map(type => ({
+                    text: `${type} <span class="filter-count">(${objectsByType[type].length})</span>`,
+                    id: `filter-${index}-${type}`,
+                    type: type,
+                    sectionIndex: index,
+                    count: objectsByType[type].length
+                }));
 
-            // Display props based on type
-            if (dnc.dncProps) {
-                if (dnc.dncType === 'Standard' || dnc.dncType === 'Model') {
-                    html += `<div class="prop-row"><span class="prop-label">Pozice X:</span><span class="prop-value">${dnc.dncProps.positionX?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Pozice Y:</span><span class="prop-value">${dnc.dncProps.positionY?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Pozice Z:</span><span class="prop-value">${dnc.dncProps.positionZ?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rotace X:</span><span class="prop-value">${dnc.dncProps.rotationX?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rotace Y:</span><span class="prop-value">${dnc.dncProps.rotationY?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rotace Z:</span><span class="prop-value">${dnc.dncProps.rotationZ?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Měřítko X:</span><span class="prop-value">${dnc.dncProps.scalingX?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Měřítko Y:</span><span class="prop-value">${dnc.dncProps.scalingY?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Měřítko Z:</span><span class="prop-value">${dnc.dncProps.scalingZ?.toFixed(4)}</span></div>`;
-                    
-                    if (dnc.dncType === 'Model') {
-                        html += `<div class="prop-row"><span class="prop-label">Model:</span><span class="prop-value">${dnc.dncProps.model || '(není)'}</span></div>`;
-                        if (dnc.dncProps.haveSector) {
-                            html += `<div class="prop-row"><span class="prop-label">Sektor:</span><span class="prop-value">${dnc.dncProps.sector || '(není)'}</span></div>`;
+                const sectionNode = createTreeNode(
+                    `📦 ${section.sectionName} <span class="section-badge">${section.dncs.length}</span>`,
+                    `section-${index}`,
+                    filterNodes,
+                    () => {
+                        selectSection(section, index);
+                        selectedSection = section;
+                        activeFilters.clear();
+                        displaySceneData(sceneData);
+                    }
+                );
+                treeView.appendChild(sectionNode);
+            });
+        }
+
+        function selectSection(section, index) {
+            selectedSection = section;
+            activeFilters.clear();
+            displaySectionFilters(section, index);
+            displaySceneData(currentSceneData);
+            updateStatus(`Viewing section: ${section.sectionName}`);
+        }
+
+        function clearFilters() {
+            activeFilters.clear();
+            displaySceneData(currentSceneData);
+            document.querySelectorAll('.filter-tag').forEach((tag, index) => {
+                tag.classList.toggle('active', index === 0);
+            });
+        }
+
+        function toggleFilter(type, sectionIndex) {
+            if (activeFilters.has(type)) {
+                activeFilters.delete(type);
+            } else {
+                activeFilters.clear();
+                activeFilters.add(type);
+            }
+            
+            // Update filter display
+            document.querySelectorAll('.filter-tag').forEach(tag => {
+                tag.classList.remove('active');
+            });
+            
+            if (activeFilters.size === 0) {
+                document.querySelectorAll('.filter-tag')[0]?.classList.add('active');
+            } else {
+                document.querySelectorAll('.filter-tag').forEach(tag => {
+                    if (tag.textContent.includes(type)) {
+                        tag.classList.add('active');
+                    }
+                });
+            }
+            
+            displaySceneData(currentSceneData);
+        }
+
+        function clearFilters() {
+            activeFilters.clear();
+            displaySceneData(currentSceneData);
+            document.querySelectorAll('.filter-tag').forEach((tag, index) => {
+                tag.classList.toggle('active', index === 0);
+            });
+        }
+
+        function createTreeNode(text, id, children, onClick) {
+            const node = document.createElement('div');
+            node.className = 'tree-node' + (children && children.length > 0 ? ' has-children' : '');
+            node.id = id;
+            node.innerHTML = text;
+            
+            if (children && children.length > 0) {
+                node.addEventListener('click', (e) => {
+                    if (e.target === node || (node.contains(e.target) && !e.target.closest('.tree-node-children'))) {
+                        const wasExpanded = node.classList.contains('expanded');
+                        node.classList.toggle('expanded');
+                        if (!wasExpanded && onClick) {
+                            // Call onClick when expanding
+                            onClick();
                         }
                     }
-                } else if (dnc.dncType === 'Light') {
-                    html += `<div class="prop-row"><span class="prop-label">Pozice X:</span><span class="prop-value">${dnc.dncProps.positionX?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Pozice Y:</span><span class="prop-value">${dnc.dncProps.positionY?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Pozice Z:</span><span class="prop-value">${dnc.dncProps.positionZ?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rotace X:</span><span class="prop-value">${dnc.dncProps.rotationX?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rotace Y:</span><span class="prop-value">${dnc.dncProps.rotationY?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rotace Z:</span><span class="prop-value">${dnc.dncProps.rotationZ?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Měřítko X:</span><span class="prop-value">${dnc.dncProps.scalingX?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Měřítko Y:</span><span class="prop-value">${dnc.dncProps.scalingY?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Měřítko Z:</span><span class="prop-value">${dnc.dncProps.scalingZ?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Typ světla:</span><span class="prop-value">${dnc.dncProps.lightType || '(není)'}</span></div>`;
-                    if (dnc.dncProps.color) {
-                        html += `<div class="prop-row"><span class="prop-label">Barva:</span><span class="prop-value">RGB(${dnc.dncProps.color.r?.toFixed(3)}, ${dnc.dncProps.color.g?.toFixed(3)}, ${dnc.dncProps.color.b?.toFixed(3)})</span></div>`;
-                    }
-                    html += `<div class="prop-row"><span class="prop-label">Síla:</span><span class="prop-value">${dnc.dncProps.power?.toFixed(2)}</span></div>`;
-                    if (dnc.dncProps.cone) {
-                        html += `<div class="prop-row"><span class="prop-label">Úhel kužele:</span><span class="prop-value">Inner: ${dnc.dncProps.cone.innerAngle?.toFixed(2)}°, Outer: ${dnc.dncProps.cone.outerAngle?.toFixed(2)}°</span></div>`;
-                    }
-                    if (dnc.dncProps.radius) {
-                        html += `<div class="prop-row"><span class="prop-label">Poloměr:</span><span class="prop-value">Inner: ${dnc.dncProps.radius.innerRadius?.toFixed(2)}, Outer: ${dnc.dncProps.radius.outerRadius?.toFixed(2)}</span></div>`;
-                    }
-                    html += `<div class="prop-row"><span class="prop-label">Flags:</span><span class="prop-value">${dnc.dncProps.flags || '0x0'}</span></div>`;
-                    if (dnc.dncProps.sector) {
-                        html += `<div class="prop-row"><span class="prop-label">Sektor:</span><span class="prop-value">${dnc.dncProps.sector}</span></div>`;
-                    }
-                } else if (dnc.dncType === 'Sound') {
-                    html += `<div class="prop-row"><span class="prop-label">Pozice X:</span><span class="prop-value">${dnc.dncProps.positionX?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Pozice Y:</span><span class="prop-value">${dnc.dncProps.positionY?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Pozice Z:</span><span class="prop-value">${dnc.dncProps.positionZ?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rotace X:</span><span class="prop-value">${dnc.dncProps.rotationX?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rotace Y:</span><span class="prop-value">${dnc.dncProps.rotationY?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rotace Z:</span><span class="prop-value">${dnc.dncProps.rotationZ?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Měřítko X:</span><span class="prop-value">${dnc.dncProps.scalingX?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Měřítko Y:</span><span class="prop-value">${dnc.dncProps.scalingY?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Měřítko Z:</span><span class="prop-value">${dnc.dncProps.scalingZ?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Typ zvuku:</span><span class="prop-value">${dnc.dncProps.soundType || '(není)'}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Hlasitost:</span><span class="prop-value">${dnc.dncProps.volume?.toFixed(2)}</span></div>`;
-                    if (dnc.dncProps.radius) {
-                        html += `<div class="prop-row"><span class="prop-label">Poloměr:</span><span class="prop-value">Inner: ${dnc.dncProps.radius.innerRadius?.toFixed(2)}, Outer: ${dnc.dncProps.radius.outerRadius?.toFixed(2)}</span></div>`;
-                        html += `<div class="prop-row"><span class="prop-label">Falloff:</span><span class="prop-value">Inner: ${dnc.dncProps.radius.innerFalloff?.toFixed(2)}, Outer: ${dnc.dncProps.radius.outerFalloff?.toFixed(2)}</span></div>`;
-                    }
-                    html += `<div class="prop-row"><span class="prop-label">Výška tónu:</span><span class="prop-value">${dnc.dncProps.pitch?.toFixed(2)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Smyčka:</span><span class="prop-value">${dnc.dncProps.loop ? 'Ano' : 'Ne'}</span></div>`;
-                    if (dnc.dncProps.sector) {
-                        html += `<div class="prop-row"><span class="prop-label">Sektor:</span><span class="prop-value">${dnc.dncProps.sector}</span></div>`;
-                    }
-                } else if (dnc.dncType === 'Occluder') {
-                    html += `<div class="prop-row"><span class="prop-label">Pozice X:</span><span class="prop-value">${dnc.dncProps.positionX?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Pozice Y:</span><span class="prop-value">${dnc.dncProps.positionY?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Pozice Z:</span><span class="prop-value">${dnc.dncProps.positionZ?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rotace X:</span><span class="prop-value">${dnc.dncProps.rotationX?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rotace Y:</span><span class="prop-value">${dnc.dncProps.rotationY?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rotace Z:</span><span class="prop-value">${dnc.dncProps.rotationZ?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Měřítko X:</span><span class="prop-value">${dnc.dncProps.scalingX?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Měřítko Y:</span><span class="prop-value">${dnc.dncProps.scalingY?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Měřítko Z:</span><span class="prop-value">${dnc.dncProps.scalingZ?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Počet vertexů:</span><span class="prop-value">${dnc.dncProps.verticesCount || 0}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Počet trojúhelníků:</span><span class="prop-value">${dnc.dncProps.trianglesCount || 0}</span></div>`;
-                    if (dnc.dncProps.vertices && dnc.dncProps.vertices.length > 0) {
-                        html += `<div class="prop-row"><span class="prop-label">První vertex:</span><span class="prop-value">(${dnc.dncProps.vertices[0].x?.toFixed(2)}, ${dnc.dncProps.vertices[0].y?.toFixed(2)}, ${dnc.dncProps.vertices[0].z?.toFixed(2)})</span></div>`;
-                    }
-                    if (dnc.dncProps.triangles && dnc.dncProps.triangles.length > 0) {
-                        html += `<div class="prop-row"><span class="prop-label">První trojúhelník:</span><span class="prop-value">[${dnc.dncProps.triangles[0].i0}, ${dnc.dncProps.triangles[0].i1}, ${dnc.dncProps.triangles[0].i2}]</span></div>`;
-                    }
-                } else if (dnc.dncType === 'Camera') {
-                    html += `<div class="prop-row"><span class="prop-label">Pozice X:</span><span class="prop-value">${dnc.dncProps.positionX?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Pozice Y:</span><span class="prop-value">${dnc.dncProps.positionY?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Pozice Z:</span><span class="prop-value">${dnc.dncProps.positionZ?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rotace X:</span><span class="prop-value">${dnc.dncProps.rotationX?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rotace Y:</span><span class="prop-value">${dnc.dncProps.rotationY?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rotace Z:</span><span class="prop-value">${dnc.dncProps.rotationZ?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Měřítko X:</span><span class="prop-value">${dnc.dncProps.scalingX?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Měřítko Y:</span><span class="prop-value">${dnc.dncProps.scalingY?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Měřítko Z:</span><span class="prop-value">${dnc.dncProps.scalingZ?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">FOV:</span><span class="prop-value">${dnc.dncProps.fov?.toFixed(2)}°</span></div>`;
-                } else if (dnc.dncType === 'Enemy') {
-                    html += `<div class="prop-row"><span class="prop-label">Síla:</span><span class="prop-value">${dnc.dncProps.strength?.toFixed(2)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rychlost:</span><span class="prop-value">${dnc.dncProps.speed?.toFixed(2)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Agresivita:</span><span class="prop-value">${dnc.dncProps.agressivity?.toFixed(2)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Inteligence:</span><span class="prop-value">${dnc.dncProps.intelligence?.toFixed(2)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Zrak:</span><span class="prop-value">${dnc.dncProps.sight?.toFixed(2)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Střelba:</span><span class="prop-value">${dnc.dncProps.shooting?.toFixed(2)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Reakce:</span><span class="prop-value">${dnc.dncProps.reactions?.toFixed(2)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Řízení:</span><span class="prop-value">${dnc.dncProps.driving?.toFixed(2)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Hmotnost:</span><span class="prop-value">${dnc.dncProps.mass?.toFixed(2)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Slyšení:</span><span class="prop-value">${dnc.dncProps.hearing?.toFixed(2)}</span></div>`;
-                    if (dnc.dncProps.enemyEnergy) {
-                        html += `<div class="prop-row"><span class="prop-label">Energie:</span><span class="prop-value">${dnc.dncProps.enemyEnergy.energy?.toFixed(2)}</span></div>`;
-                        html += `<div class="prop-row"><span class="prop-label">Levá ruka:</span><span class="prop-value">${dnc.dncProps.enemyEnergy.leftHand?.toFixed(2)}</span></div>`;
-                        html += `<div class="prop-row"><span class="prop-label">Pravá ruka:</span><span class="prop-value">${dnc.dncProps.enemyEnergy.rightHand?.toFixed(2)}</span></div>`;
-                        html += `<div class="prop-row"><span class="prop-label">Levá noha:</span><span class="prop-value">${dnc.dncProps.enemyEnergy.leftLeg?.toFixed(2)}</span></div>`;
-                        html += `<div class="prop-row"><span class="prop-label">Pravá noha:</span><span class="prop-value">${dnc.dncProps.enemyEnergy.rightLeg?.toFixed(2)}</span></div>`;
-                    }
-                    if (dnc.dncProps.script) {
-                        html += `<div class="prop-row"><span class="prop-label">Skript:</span><span class="prop-value"><pre style="background: #f0f0f0; padding: 10px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.85em;">${escapeHtml(dnc.dncProps.script)}</pre></span></div>`;
-                    }
-                } else if (dnc.dncType === 'Script') {
-                    html += `<div class="prop-row"><span class="prop-label">Pozice X:</span><span class="prop-value">${dnc.dncProps.positionX?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Pozice Y:</span><span class="prop-value">${dnc.dncProps.positionY?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Pozice Z:</span><span class="prop-value">${dnc.dncProps.positionZ?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rotace X:</span><span class="prop-value">${dnc.dncProps.rotationX?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rotace Y:</span><span class="prop-value">${dnc.dncProps.rotationY?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Rotace Z:</span><span class="prop-value">${dnc.dncProps.rotationZ?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Měřítko X:</span><span class="prop-value">${dnc.dncProps.scalingX?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Měřítko Y:</span><span class="prop-value">${dnc.dncProps.scalingY?.toFixed(4)}</span></div>`;
-                    html += `<div class="prop-row"><span class="prop-label">Měřítko Z:</span><span class="prop-value">${dnc.dncProps.scalingZ?.toFixed(4)}</span></div>`;
-                    if (dnc.dncProps.script) {
-                        html += `<div class="prop-row"><span class="prop-label">Lua skript:</span><span class="prop-value"><pre style="background: #f0f0f0; padding: 10px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.85em; max-height: 300px; overflow-y: auto;">${escapeHtml(dnc.dncProps.script)}</pre></span></div>`;
-                    }
-                } else if (dnc.dncType === 'InitScript') {
-                    if (dnc.dncProps.script) {
-                        html += `<div class="prop-row"><span class="prop-label">Lua skript:</span><span class="prop-value"><pre style="background: #f0f0f0; padding: 10px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 0.85em; max-height: 300px; overflow-y: auto;">${escapeHtml(dnc.dncProps.script)}</pre></span></div>`;
-                    }
+                });
+                
+                const childrenContainer = document.createElement('div');
+                childrenContainer.className = 'tree-node-children';
+                
+                children.forEach(child => {
+                    const childNode = document.createElement('div');
+                    childNode.className = 'tree-node';
+                    childNode.id = child.id;
+                    childNode.innerHTML = child.text;
+                    childNode.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        
+                        // Handle filter clicks
+                        if (child.type) {
+                            toggleFilter(child.type, child.sectionIndex);
+                            document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+                            childNode.classList.add('selected');
+                        } else {
+                            // Handle regular object clicks
+                            selectNode(child.id, child.data);
+                            document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+                            childNode.classList.add('selected');
+                        }
+                    });
+                    childrenContainer.appendChild(childNode);
+                });
+                
+                node.appendChild(childrenContainer);
+            } else {
+                node.addEventListener('click', () => {
+                    onClick();
+                    document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+                    node.classList.add('selected');
+                });
+            }
+            
+            return node;
+        }
+
+        function selectNode(nodeId, data) {
+            selectedNode = data;
+            displayProperties(data);
+            updateStatus(`Selected: ${nodeId}`);
+        }
+
+        function displaySceneData(sceneData) {
+            let html = '<div style="padding: 24px;">';
+            
+            // Show header only if no section is selected
+            if (!selectedSection && sceneData.header.content) {
+                html += '<div style="margin-bottom: 30px;">';
+                html += '<h2 style="color: #007acc; margin-bottom: 15px; font-size: 18px; font-weight: 600;">📋 Header</h2>';
+                html += displayHeader(sceneData.header);
+                html += '</div>';
+            }
+
+            // Show sections
+            sceneData.sections.forEach((section, index) => {
+                // Only show selected section or all if none selected
+                if (selectedSection && selectedSection !== section) {
+                    return;
+                }
+
+                // Filter objects if filters are active
+                let objectsToShow = section.dncs;
+                if (selectedSection === section && activeFilters.size > 0) {
+                    objectsToShow = section.dncs.filter(dnc => activeFilters.has(dnc.dncType || 'Unknown'));
+                }
+
+                html += '<div style="margin-bottom: 30px;">';
+                html += `<h2 style="color: #007acc; margin-bottom: 12px; font-size: 18px; font-weight: 600;">📦 ${section.sectionName} <span class="section-badge">${objectsToShow.length} ${objectsToShow.length === 1 ? 'object' : 'objects'}</span></h2>`;
+                html += `<div style="color: #666; font-size: 12px; margin-bottom: 16px;">Type: ${section.sectionType} | Length: ${section.sectionLength} bytes | Start: 0x${section.sectionStart.toString(16).toUpperCase()}</div>`;
+                
+                if (activeFilters.size > 0) {
+                    html += `<div style="margin-bottom: 16px; padding: 12px; background: #e3f2fd; border-radius: 6px; border-left: 3px solid #007acc;">`;
+                    html += `<strong style="color: #007acc;">Active filter:</strong> `;
+                    activeFilters.forEach(filter => {
+                        html += `<span class="object-type-badge">${filter}</span> `;
+                    });
+                    html += `<span style="margin-left: 12px; color: #666; cursor: pointer; text-decoration: underline;" onclick="clearFilters()">Clear filters</span>`;
+                    html += `</div>`;
+                }
+                
+                if (objectsToShow.length === 0) {
+                    html += '<div style="padding: 40px; color: #999; text-align: center; background: #fafafa; border-radius: 8px; border: 1px dashed #e0e0e0;">';
+                    html += '<div style="font-size: 48px; margin-bottom: 16px;">🔍</div>';
+                    html += '<div style="font-size: 14px;">No objects match the selected filter</div>';
+                    html += '</div>';
+                } else {
+                    html += '<div style="display: grid; gap: 12px;">';
+                    objectsToShow.forEach((dnc) => {
+                        html += displayDncCard(dnc);
+                    });
+                    html += '</div>';
+                }
+                html += '</div>';
+            });
+
+            html += '</div>';
+            editorContent.innerHTML = html;
+        }
+
+        function displayHeader(header) {
+            let html = '<div style="background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid #e0e0e0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">';
+            const props = header.content?.dncProps;
+            if (props) {
+                html += `<div style="display: grid; grid-template-columns: 150px 1fr; gap: 12px; font-size: 13px;">`;
+                html += `<div style="color: #666; font-weight: 500;">Magic:</div><div style="color: #333;">${header.magic.map(b => '0x' + b.toString(16).padStart(2, '0').toUpperCase()).join(' ')}</div>`;
+                html += `<div style="color: #666; font-weight: 500;">Size:</div><div style="color: #333;">${ByteUtils.toInt32(header.size)} bytes</div>`;
+                html += `<div style="color: #666; font-weight: 500;">Text:</div><div style="color: #333;">${props.text || '(empty)'}</div>`;
+                html += `<div style="color: #666; font-weight: 500;">View Distance:</div><div style="color: #333;">${props.viewDistance?.toFixed(2)}</div>`;
+                html += `<div style="color: #666; font-weight: 500;">Camera Distance:</div><div style="color: #333;">${props.cameraDistance?.toFixed(2)}</div>`;
+                html += `<div style="color: #666; font-weight: 500;">Near Clipping:</div><div style="color: #333;">${props.nearClipping?.toFixed(2)}</div>`;
+                html += `<div style="color: #666; font-weight: 500;">Far Clipping:</div><div style="color: #333;">${props.farClipping?.toFixed(2)}</div>`;
+                html += `</div>`;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function displayDncCard(dnc) {
+            const dncData = JSON.stringify(dnc).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            let html = `<div class="object-card" onclick="selectDncObject('${dncData.replace(/'/g, "\\'")}')">`;
+            html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">`;
+            html += `<span style="color: #007acc; font-weight: 600; font-size: 14px;">${dnc.name || `Object ${dnc.ID}`}</span>`;
+            html += `<span class="object-type-badge">${dnc.dncType}</span>`;
+            html += `</div>`;
+            html += `<div style="font-size: 12px; color: #666;">ID: ${dnc.ID} | Type: ${dnc.dncKind} | Size: ${dnc.rawData.length} bytes</div>`;
+            html += '</div>';
+            return html;
+        }
+
+        function selectDncObject(dncDataStr) {
+            try {
+                const dnc = JSON.parse(dncDataStr.replace(/&quot;/g, '"').replace(/&#39;/g, "'"));
+                selectNode('dnc', dnc);
+            } catch (e) {
+                console.error('Error parsing DNC data:', e);
+            }
+        }
+
+        function displayProperties(data) {
+            if (!data) {
+                propertiesContent.innerHTML = '<div class="empty-state" style="height: auto;"><div style="font-size: 12px;">Select an object to view properties</div></div>';
+                return;
+            }
+
+            let html = '';
+            
+            if (data.sectionName) {
+                // Section properties
+                html += '<div class="property-group">';
+                html += '<div class="property-group-title">Section Info</div>';
+                html += `<div class="property-item"><span class="property-label">Name:</span><span class="property-value">${data.sectionName}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Type:</span><span class="property-value">${data.sectionType}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Length:</span><span class="property-value">${data.sectionLength} bytes</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Start:</span><span class="property-value">0x${data.sectionStart.toString(16).toUpperCase()}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Objects:</span><span class="property-value">${data.dncs?.length || 0}</span></div>`;
+                html += '</div>';
+            } else if (data.content) {
+                // Header properties
+                const props = data.content.dncProps;
+                html += '<div class="property-group">';
+                html += '<div class="property-group-title">Header Properties</div>';
+                html += `<div class="property-item"><span class="property-label">Magic:</span><span class="property-value">${data.magic.map(b => '0x' + b.toString(16).padStart(2, '0').toUpperCase()).join(' ')}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Size:</span><span class="property-value">${ByteUtils.toInt32(data.size)} bytes</span></div>`;
+                if (props) {
+                    html += `<div class="property-item"><span class="property-label">Text:</span><span class="property-value">${props.text || '(empty)'}</span></div>`;
+                    html += `<div class="property-item"><span class="property-label">View Distance:</span><span class="property-value">${props.viewDistance?.toFixed(2)}</span></div>`;
+                    html += `<div class="property-item"><span class="property-label">Camera Distance:</span><span class="property-value">${props.cameraDistance?.toFixed(2)}</span></div>`;
+                    html += `<div class="property-item"><span class="property-label">Near Clipping:</span><span class="property-value">${props.nearClipping?.toFixed(2)}</span></div>`;
+                    html += `<div class="property-item"><span class="property-label">Far Clipping:</span><span class="property-value">${props.farClipping?.toFixed(2)}</span></div>`;
+                }
+                html += '</div>';
+            } else if (data.dncType) {
+                // DNC object properties
+                html += '<div class="property-group">';
+                html += '<div class="property-group-title">Object Info</div>';
+                html += `<div class="property-item"><span class="property-label">ID:</span><span class="property-value">${data.ID}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Name:</span><span class="property-value">${data.name || '(unnamed)'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Type:</span><span class="property-value">${data.dncType}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Kind:</span><span class="property-value">${data.dncKind}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Data Size:</span><span class="property-value">${data.rawData.length} bytes</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Object ID:</span><span class="property-value">${data.objectIDArr.map(b => '0x' + b.toString(16).padStart(2, '0').toUpperCase()).join(' ')}</span></div>`;
+                html += '</div>';
+
+                if (data.dncProps) {
+                    html += displayDncProps(data.dncProps, data.dncType);
                 }
             }
 
-            html += '</div>';
-            html += '</div>';
+            propertiesContent.innerHTML = html;
+        }
+
+        function displayDncProps(props, dncType) {
+            let html = '';
+            
+            if (dncType === 'Standard' || dncType === 'Model' || dncType === 'Light' || dncType === 'Sound' || dncType === 'Occluder' || dncType === 'Camera' || dncType === 'Script') {
+                html += '<div class="property-group">';
+                html += '<div class="property-group-title">Transform</div>';
+                html += `<div class="property-item"><span class="property-label">Position X:</span><span class="property-value">${props.positionX?.toFixed(4) || '0.0000'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Position Y:</span><span class="property-value">${props.positionY?.toFixed(4) || '0.0000'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Position Z:</span><span class="property-value">${props.positionZ?.toFixed(4) || '0.0000'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Rotation X:</span><span class="property-value">${props.rotationX?.toFixed(4) || '0.0000'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Rotation Y:</span><span class="property-value">${props.rotationY?.toFixed(4) || '0.0000'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Rotation Z:</span><span class="property-value">${props.rotationZ?.toFixed(4) || '0.0000'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Scale X:</span><span class="property-value">${props.scalingX?.toFixed(4) || '0.0000'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Scale Y:</span><span class="property-value">${props.scalingY?.toFixed(4) || '0.0000'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Scale Z:</span><span class="property-value">${props.scalingZ?.toFixed(4) || '0.0000'}</span></div>`;
+                html += '</div>';
+            }
+
+            if (dncType === 'Model') {
+                html += '<div class="property-group">';
+                html += '<div class="property-group-title">Model Properties</div>';
+                html += `<div class="property-item"><span class="property-label">Model:</span><span class="property-value">${props.model || '(none)'}</span></div>`;
+                if (props.haveSector) {
+                    html += `<div class="property-item"><span class="property-label">Sector:</span><span class="property-value">${props.sector || '(none)'}</span></div>`;
+                }
+                html += '</div>';
+            }
+
+            if (dncType === 'Light') {
+                html += '<div class="property-group">';
+                html += '<div class="property-group-title">Light Properties</div>';
+                html += `<div class="property-item"><span class="property-label">Type:</span><span class="property-value">${props.lightType || '(none)'}</span></div>`;
+                if (props.color) {
+                    html += `<div class="property-item"><span class="property-label">Color:</span><span class="property-value">RGB(${props.color.r?.toFixed(3)}, ${props.color.g?.toFixed(3)}, ${props.color.b?.toFixed(3)})</span></div>`;
+                }
+                html += `<div class="property-item"><span class="property-label">Power:</span><span class="property-value">${props.power?.toFixed(2) || '0.00'}</span></div>`;
+                if (props.cone) {
+                    html += `<div class="property-item"><span class="property-label">Cone:</span><span class="property-value">Inner: ${props.cone.innerAngle?.toFixed(2)}°, Outer: ${props.cone.outerAngle?.toFixed(2)}°</span></div>`;
+                }
+                if (props.radius) {
+                    html += `<div class="property-item"><span class="property-label">Radius:</span><span class="property-value">Inner: ${props.radius.innerRadius?.toFixed(2)}, Outer: ${props.radius.outerRadius?.toFixed(2)}</span></div>`;
+                }
+                html += `<div class="property-item"><span class="property-label">Flags:</span><span class="property-value">${props.flags || '0x0'}</span></div>`;
+                if (props.sector) {
+                    html += `<div class="property-item"><span class="property-label">Sector:</span><span class="property-value">${props.sector}</span></div>`;
+                }
+                html += '</div>';
+            }
+
+            if (dncType === 'Sound') {
+                html += '<div class="property-group">';
+                html += '<div class="property-group-title">Sound Properties</div>';
+                html += `<div class="property-item"><span class="property-label">Type:</span><span class="property-value">${props.soundType || '(none)'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Volume:</span><span class="property-value">${props.volume?.toFixed(2) || '0.00'}</span></div>`;
+                if (props.radius) {
+                    html += `<div class="property-item"><span class="property-label">Radius:</span><span class="property-value">Inner: ${props.radius.innerRadius?.toFixed(2)}, Outer: ${props.radius.outerRadius?.toFixed(2)}</span></div>`;
+                    html += `<div class="property-item"><span class="property-label">Falloff:</span><span class="property-value">Inner: ${props.radius.innerFalloff?.toFixed(2)}, Outer: ${props.radius.outerFalloff?.toFixed(2)}</span></div>`;
+                }
+                html += `<div class="property-item"><span class="property-label">Pitch:</span><span class="property-value">${props.pitch?.toFixed(2) || '0.00'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Loop:</span><span class="property-value">${props.loop ? 'Yes' : 'No'}</span></div>`;
+                if (props.sector) {
+                    html += `<div class="property-item"><span class="property-label">Sector:</span><span class="property-value">${props.sector}</span></div>`;
+                }
+                html += '</div>';
+            }
+
+            if (dncType === 'Occluder') {
+                html += '<div class="property-group">';
+                html += '<div class="property-group-title">Occluder Properties</div>';
+                html += `<div class="property-item"><span class="property-label">Vertices:</span><span class="property-value">${props.verticesCount || 0}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Triangles:</span><span class="property-value">${props.trianglesCount || 0}</span></div>`;
+                if (props.vertices && props.vertices.length > 0) {
+                    html += `<div class="property-item"><span class="property-label">First Vertex:</span><span class="property-value">(${props.vertices[0].x?.toFixed(2)}, ${props.vertices[0].y?.toFixed(2)}, ${props.vertices[0].z?.toFixed(2)})</span></div>`;
+                }
+                if (props.triangles && props.triangles.length > 0) {
+                    html += `<div class="property-item"><span class="property-label">First Triangle:</span><span class="property-value">[${props.triangles[0].i0}, ${props.triangles[0].i1}, ${props.triangles[0].i2}]</span></div>`;
+                }
+                html += '</div>';
+            }
+
+            if (dncType === 'Camera') {
+                html += '<div class="property-group">';
+                html += '<div class="property-group-title">Camera Properties</div>';
+                html += `<div class="property-item"><span class="property-label">FOV:</span><span class="property-value">${props.fov?.toFixed(2) || '0.00'}°</span></div>`;
+                html += '</div>';
+            }
+
+            if (dncType === 'Enemy') {
+                html += '<div class="property-group">';
+                html += '<div class="property-group-title">Enemy Stats</div>';
+                html += `<div class="property-item"><span class="property-label">Strength:</span><span class="property-value">${props.strength?.toFixed(2) || '0.00'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Speed:</span><span class="property-value">${props.speed?.toFixed(2) || '0.00'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Aggressivity:</span><span class="property-value">${props.agressivity?.toFixed(2) || '0.00'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Intelligence:</span><span class="property-value">${props.intelligence?.toFixed(2) || '0.00'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Sight:</span><span class="property-value">${props.sight?.toFixed(2) || '0.00'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Shooting:</span><span class="property-value">${props.shooting?.toFixed(2) || '0.00'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Reactions:</span><span class="property-value">${props.reactions?.toFixed(2) || '0.00'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Driving:</span><span class="property-value">${props.driving?.toFixed(2) || '0.00'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Mass:</span><span class="property-value">${props.mass?.toFixed(2) || '0.00'}</span></div>`;
+                html += `<div class="property-item"><span class="property-label">Hearing:</span><span class="property-value">${props.hearing?.toFixed(2) || '0.00'}</span></div>`;
+                if (props.enemyEnergy) {
+                    html += '<div class="property-group">';
+                    html += '<div class="property-group-title">Energy</div>';
+                    html += `<div class="property-item"><span class="property-label">Energy:</span><span class="property-value">${props.enemyEnergy.energy?.toFixed(2) || '0.00'}</span></div>`;
+                    html += `<div class="property-item"><span class="property-label">Left Hand:</span><span class="property-value">${props.enemyEnergy.leftHand?.toFixed(2) || '0.00'}</span></div>`;
+                    html += `<div class="property-item"><span class="property-label">Right Hand:</span><span class="property-value">${props.enemyEnergy.rightHand?.toFixed(2) || '0.00'}</span></div>`;
+                    html += `<div class="property-item"><span class="property-label">Left Leg:</span><span class="property-value">${props.enemyEnergy.leftLeg?.toFixed(2) || '0.00'}</span></div>`;
+                    html += `<div class="property-item"><span class="property-label">Right Leg:</span><span class="property-value">${props.enemyEnergy.rightLeg?.toFixed(2) || '0.00'}</span></div>`;
+                    html += '</div>';
+                }
+            }
+
+            if (props.script) {
+                html += '<div class="property-group">';
+                html += '<div class="property-group-title">Lua Script</div>';
+                html += `<div class="script-view">${escapeHtml(props.script)}</div>`;
+                html += '</div>';
+            }
+
             return html;
         }
 
@@ -558,11 +1148,41 @@
             return div.innerHTML;
         }
 
-        function toggleSection(header) {
-            const content = header.nextElementSibling;
-            content.classList.toggle('expanded');
+        function saveFile() {
+            if (!changeTracker.hasChanges) {
+                addLog('No changes to save', 'info');
+                return;
+            }
+            addLog('Save functionality will be implemented in next step', 'info');
+            // TODO: Implement save functionality
         }
+
+        function saveFileAs() {
+            addLog('Save As functionality will be implemented in next step', 'info');
+            // TODO: Implement save as functionality
+        }
+
+        function undo() {
+            addLog('Undo functionality will be implemented in next step', 'info');
+            // TODO: Implement undo
+        }
+
+        function redo() {
+            addLog('Redo functionality will be implemented in next step', 'info');
+            // TODO: Implement redo
+        }
+
+        // Handle tree node selection from card clicks
+        window.selectNode = function(id, data) {
+            selectedNode = data;
+            displayProperties(data);
+            document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('selected'));
+            const node = document.getElementById(id);
+            if (node) {
+                node.classList.add('selected');
+                node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        };
     </script>
 </body>
 </html>
-
